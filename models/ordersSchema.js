@@ -1,6 +1,6 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
+
 
 // Define the User model
 const orders = sequelize.define('orders', {
@@ -25,7 +25,10 @@ const orders = sequelize.define('orders', {
  },description:{
         type: DataTypes.STRING,
         allowNull: true
- },orderState:{
+ },orderType:{
+       type: DataTypes.STRING,
+       allowNull: true
+},orderState:{
         type: DataTypes.TINYINT,
         allowNull: true
  },deliveryPersonId:{
@@ -40,5 +43,6 @@ const orders = sequelize.define('orders', {
  {
     timestamps: false,
 });
+
 
 module.exports = orders;
