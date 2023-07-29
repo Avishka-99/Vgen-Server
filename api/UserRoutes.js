@@ -98,23 +98,26 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage: storage });
-router.post("/productStore", upload.single("productImage"), async (req, res) => {
-  console.log(req.file);
-  try {
-    const { quantity, description, productName, price } = req.body;
-    const { filename } = req.file;
-
-    await product.create({
-      quantity,
-      description,
-      productName,
-      price,
-      productImage: filename,
+router.post("/productStore",upload.single('productImage'),async (req, res) => {
+           console.log(req.file);
+        try{
+            const {quantity,description,productName,price,productType,veganType}=req.body;
+            const{filename}=req.file;
+        
+            await product.create({
+                quantity,
+                description,
+                productName,
+                price,
+                productType,
+                veganType,
+                productImage:filename
+            });
+        }catch(err){
+            console.log(err);
+        }
+        
     });
-  } catch (err) {
-    console.log(err);
-  }
-});
 
 router.get("/productGet", async (req, res) => {
   try {
