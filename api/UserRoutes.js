@@ -15,19 +15,18 @@ router.post("/signinuser", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   // console.log(email);
-  User.findAll({
+  User.findOne({
     where: {
       email: email,
     },
   })
     .then((result) => {
-      if (result.length == 0) {
-        res.send("Please check email")
-      } else {
+      console.log(result);
+      if (!result) {
+        res.send("Please check email");
+      }
+      {
         bcrypt.compare(password, result.toJSON().password, (err, result_2) => {
-          if (err) {
-            res.send(200);
-          }
           if (result_2) {
             console.log("Hello");
             const type = result.toJSON().userRole;
@@ -42,7 +41,7 @@ router.post("/signinuser", (req, res) => {
             const response = { type, token };
             res.send(response);
           } else {
-            res.send("202");
+            res.send("Please check password");
           }
         });
       }
@@ -98,26 +97,23 @@ const storage = multer.diskStorage({
   },
 });
 const upload = multer({ storage: storage });
-router.post("/productStore",upload.single('productImage'),async (req, res) => {
-           console.log(req.file);
-        try{
-            const {quantity,description,productName,price,productType,veganType}=req.body;
-            const{filename}=req.file;
-        
-            await product.create({
-                quantity,
-                description,
-                productName,
-                price,
-                productType,
-                veganType,
-                productImage:filename
-            });
-        }catch(err){
-            console.log(err);
-        }
-        
+router.post("/productStore", upload.single("productImage"), async (req, res) => {
+  console.log(req.file);
+  try {
+    const { quantity, description, productName, price } = req.body;
+    const { filename } = req.file;
+
+    await product.create({
+      quantity,
+      description,
+      productName,
+      price,
+      productImage: filename,
     });
+  } catch (err) {
+    console.log(err);
+  }
+});
 
 router.get("/productGet", async (req, res) => {
   try {
