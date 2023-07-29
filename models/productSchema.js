@@ -26,16 +26,24 @@ const product = sequelize.define('product', {
         type: DataTypes.STRING,
         allowNull: true
  },price:{
-        type: DataTypes.INTEGER,
+        type: DataTypes.DECIMAL,
         allowNull: true
  },
 productImage:{
         type: DataTypes.STRING,    
         allowNull: true
  },
+productType:{
+              type: DataTypes.STRING,
+              allowNull: true
+},veganType:{
+              type: DataTypes.STRING,
+              allowNull: true
+
 },
 
- {
+},     
+{
     timestamps: false,
 });
 
