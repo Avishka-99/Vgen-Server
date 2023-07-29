@@ -15,33 +15,37 @@ router.post("/signinuser", (req, res) => {
   const email = req.body.email;
   const password = req.body.password;
   // console.log(email);
-  User.findOne({
+  User.findAll({
     where: {
       email: email,
     },
   })
     .then((result) => {
-      bcrypt.compare(password, result.toJSON().password, (err, result_2) => {
-        if (err) {
-          res.send(200);
-        }
-        if (result_2) {
-          console.log("Hello");
-          const type = result.toJSON().userRole;
-          console.log(result.toJSON().userRole);
-          const payload = {
-            userId: result.toJSON().userId,
-            password: result.toJSON().password,
-            time: new Date(),
-          };
-          const secretKey = "Avishka";
-          const token = jwt.sign(payload, secretKey, { expiresIn: "10h" });
-          const response = { type, token };
-          res.send(response);
-        } else {
-          res.send("202");
-        }
-      });
+      if (result.length == 0) {
+        res.send("Please check email")
+      } else {
+        bcrypt.compare(password, result.toJSON().password, (err, result_2) => {
+          if (err) {
+            res.send(200);
+          }
+          if (result_2) {
+            console.log("Hello");
+            const type = result.toJSON().userRole;
+            console.log(result.toJSON().userRole);
+            const payload = {
+              userId: result.toJSON().userId,
+              password: result.toJSON().password,
+              time: new Date(),
+            };
+            const secretKey = "Avishka";
+            const token = jwt.sign(payload, secretKey, { expiresIn: "10h" });
+            const response = { type, token };
+            res.send(response);
+          } else {
+            res.send("202");
+          }
+        });
+      }
     })
     .catch((error) => {
       console.error("Failed to retrieve data : ", error);
