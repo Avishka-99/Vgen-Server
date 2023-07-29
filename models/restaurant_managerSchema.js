@@ -4,7 +4,7 @@ const sequelize = require('./db');
 
 // Define the User model
 const restaurantManager = sequelize.define('restaurant_manager', {
- restaurantManagerId:{
+ resturantManagerId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,

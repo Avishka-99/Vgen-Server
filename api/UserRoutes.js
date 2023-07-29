@@ -7,6 +7,7 @@ const app = express();
 const jwt = require("jsonwebtoken");
 const User = require("../models/userSchema");
 const product = require("../models/productSchema");
+const restaurant =require("../models/restaurant_managerSchema");
 
 const bcrypt = require("bcrypt");
 const multer = require("multer");
@@ -123,4 +124,12 @@ router.get("/productGet", async (req, res) => {
     console.log(err);
   }
 });
+router.get("/restaurantGet",async(req,res)=>{
+  try{
+    const resData=await restaurant.findAll();
+    res.json(resData);
+  }catch(err){
+    console.log(err);
+  }
+})
 module.exports = router;
