@@ -18,6 +18,16 @@ const payments=sequelize.define('payments',{
         allowNull: true,
         
     },
+    
+    userId:{
+        type: DataTypes.INTEGER,
+        allowNull: false,
+        primaryKey: true,
+        foriegnKey:true,
+        foriegnKey:true,
+    },
+    
+    
 },
 {
    timestamps: false,
