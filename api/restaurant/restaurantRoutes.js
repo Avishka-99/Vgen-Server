@@ -5,33 +5,13 @@ const app = express();
 const orders = require('../../models/ordersSchema');
 const placeOrders = require('../../models/place_orderSchema');
 const product = require('../../models/productSchema');
-const payment=require('../../models/paymentsSchema')
+const payments = require('../../models/paymentsSchema');
 const users=require('../../models/userSchema')
 const multer = require('multer');
 const { Sequelize } = require('sequelize');
-const payments = require('../../models/paymentsSchema');
 
-/*Create a join relation */
-orders.hasMany(placeOrders,{
-  foreignKey:'orderId',
-});
-placeOrders.belongsTo(orders,{
-  foreignKey: 'orderId',
-});
-users.hasOne(placeOrders,{
-  foreignKey:'userId',
-});
-placeOrders.belongsTo(users,{
-  foreignKey: 'userId',
-});
-orders.hasOne(payment,{
-  foreignKey:'orderId',
-});
-payment.belongsTo(orders,{
-  foreignKey:'orderId',
-})
 
-/* */
+
 
 // product store 
 const storage = multer.diskStorage({
@@ -69,22 +49,39 @@ router.post("/productAdd",upload.single('productImage'), async (req, res) => {
 router.get("/resDetailsGet",async (req, res) => {
     const user_id = req.query.user_id;
     
+    /*Create a join relation */
+    orders.belongsTo(placeOrders,{
+      foreignKey:'orderId',
+    });
+    placeOrders.hasMany(orders,{
+      foreignKey: 'orderId',
+    });
+    users.hasOne(placeOrders,{
+      foreignKey:'userId',
+    });
+    placeOrders.belongsTo(users,{
+      foreignKey: 'userId',
+    });
+    // placeOrders.belongsTo(payments, {
+    //   foreignKey: 'orderId',
+    // });
+    // payments.hasOne(placeOrders, {
+    //   foreignKey: 'orderId',
+    // });
+    /* */
     
     try{
       const productData=await placeOrders.findAll({
         attributes :{
-          exclude:['orderId' ,'productId' ,'resturantManagerId' ,'userId']
+          
+          exclude:['orderId' ,'productId','resturantManagerId','userId']
         }
         ,include: [
           {
             model: orders,
             required: true,
             attributes: ['orderId', 'orderType', 'orderState'],
-            include: {
-              model: payments,
-              required: true,
-              attributes: ['status'],
-            },
+           
           },
           {
             model: users,
@@ -92,27 +89,36 @@ router.get("/resDetailsGet",async (req, res) => {
             attributes: [
               [Sequelize.literal('CONCAT(firstName, " ", lastName)'), 'fullName'],
             ],
-          }
-         
+          },
+          // {
+          //   model: payments,
+          //   required: true,
+          //   attributes: ['status'],
+            
+          // },
           
         ],
         where: {
-          userId: user_id,
+          resturantManagerId: user_id,
         },
-        group:'order.orderId',
+        group:'place_order.orderId',
         
       });
       
         
-      
-      
-       
-        
-      
-      res.json(productData);
-      // console.log(productData[0].order.dataValues.orderId)
+      // Flattening the result array to extract desired data
+      const flattenedProductData = productData.map((placeOrder) => {
+        return {
+          orderId: placeOrder.orders[0].orderId,
+          orderType: placeOrder.orders[0].orderType,
+          orderState: placeOrder.orders[0].orderState,
+          fullName: placeOrder.user.dataValues.fullName,
+          // status: placeOrder.payment.status,
+        };
+      });
 
-      
+      res.json(flattenedProductData);
+      console.log(flattenedProductData);
      }catch(err){
       console.log(err);
      };
