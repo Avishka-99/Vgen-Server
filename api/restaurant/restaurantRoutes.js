@@ -45,7 +45,7 @@ router.post("/productAdd",upload.single('productImage'), async (req, res) => {
 
 
 
-
+//table view details gets of the restaurant manager home
 router.get("/resDetailsGet",async (req, res) => {
     const user_id = req.query.user_id;
     
@@ -62,16 +62,20 @@ router.get("/resDetailsGet",async (req, res) => {
     placeOrders.belongsTo(users,{
       foreignKey: 'userId',
     });
-    // placeOrders.belongsTo(payments, {
-    //   foreignKey: 'orderId',
-    // });
-    // payments.hasOne(placeOrders, {
-    //   foreignKey: 'orderId',
-    // });
+    placeOrders.hasOne(payments, {
+      foreignKey: 'orderId',
+    });
+    payments.belongsTo(placeOrders, {
+      foreignKey: 'orderId',
+    });
     /* */
     
     try{
       const productData=await placeOrders.findAll({
+        where: {
+          resturantManagerId: user_id,
+          
+        },
         attributes :{
           
           exclude:['orderId' ,'productId','resturantManagerId','userId']
@@ -90,17 +94,18 @@ router.get("/resDetailsGet",async (req, res) => {
               [Sequelize.literal('CONCAT(firstName, " ", lastName)'), 'fullName'],
             ],
           },
-          // {
-          //   model: payments,
-          //   required: true,
-          //   attributes: ['status'],
+          {
+            model: payments,
+            required: true,
+            attributes: ['status'],
+            where: {
+              userId: '24',
+            },
             
-          // },
+          },
           
         ],
-        where: {
-          resturantManagerId: user_id,
-        },
+       
         group:'place_order.orderId',
         
       });
@@ -113,7 +118,7 @@ router.get("/resDetailsGet",async (req, res) => {
           orderType: placeOrder.orders[0].orderType,
           orderState: placeOrder.orders[0].orderState,
           fullName: placeOrder.user.dataValues.fullName,
-          // status: placeOrder.payment.status,
+          status: placeOrder.payment.status,
         };
       });
 
@@ -124,4 +129,54 @@ router.get("/resDetailsGet",async (req, res) => {
      };
 
 });
+//
+
+router.get('/allProduct',async (req, res) => {
+  const user_id = req.query.user_id;
+  
+});
+
+//bar chart details get of the restaurant manager home
+router.get('/orderTypes',async (req, res) => {
+  const user_id = req.query.user_id;
+   /*Create a join relation */
+  orders.belongsTo(placeOrders,{
+    foreignKey:'orderId',
+  });
+  placeOrders.hasMany(orders,{
+    foreignKey: 'orderId',
+  });
+  /* */
+  try {
+    const firstLevelGroup = await orders.findAll({
+      attributes: ['orderType'],
+      include: [
+        {
+          model: placeOrders,
+          as: 'place_order',
+          attributes: [],
+          where: {
+            resturantManagerId: user_id,
+          },
+        },
+      ],
+      group: ['place_order.orderId'],
+    });
+
+    const result = await orders.findAll({
+      attributes: ['orderType', [Sequelize.fn('COUNT', Sequelize.col('orderType')), 'countPerType']],
+      where: {
+        orderType: firstLevelGroup.map((order) => order.orderType),
+      },
+      group: ['orderType'],
+    });
+
+    res.json(result);
+    console.log(result);
+  } catch (err) {
+    console.log(err);
+  }
+  
+});
+//
 module.exports = router;
