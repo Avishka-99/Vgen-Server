@@ -24,7 +24,7 @@ router.post('/signinuser', (req, res) => {
 	})
 		.then((result) => {
 			console.log(result);
-			if (!result) {
+			if (result.length == 0) {
 				res.send('Please check email');
 			}
 			{
@@ -76,7 +76,7 @@ router.post('/registeruser', (req, res) => {
 	// const profilePicture=req.body.profilePicture;
 	bcrypt.hash(password, 10, (err, hash) => {
 		if (err) {
-			res.send('unsuccessful');
+			res.send({type: 'error', message: 'An error occured. Try again later'});
 		} else {
 			User.findAll({
 				where: {
