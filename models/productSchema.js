@@ -13,35 +13,31 @@ const product = sequelize.define('product', {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
-              autoIncrement: true
-
-
- },quantity:{
-        type: DataTypes.INTEGER,    
-        allowNull: true
- },description:{
+        autoIncrement: true
+},
+ description:{
         type: DataTypes.STRING,
         allowNull: true
  },productName:{
         type: DataTypes.STRING,
         allowNull: true
- },price:{
-        type: DataTypes.DECIMAL,
-        allowNull: true
  },
+ 
 productImage:{
         type: DataTypes.STRING,    
         allowNull: true
  },
-productType:{
-              type: DataTypes.STRING,
-              allowNull: true
-},veganType:{
-              type: DataTypes.STRING,
-              allowNull: true
-
+ product_category:{
+       type: DataTypes.STRING,
+       allowNull: true
+},vegan_category:{
+       type: DataTypes.STRING,
+       allowNull: true
 },
-
+row_category:{
+       type: DataTypes.STRING,
+       allowNull: true
+},
 },     
 {
     timestamps: false,
