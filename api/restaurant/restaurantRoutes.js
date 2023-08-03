@@ -6,9 +6,10 @@ const orders = require('../../models/ordersSchema');
 const placeOrders = require('../../models/place_orderSchema');
 const product = require('../../models/productSchema');
 const payments = require('../../models/paymentsSchema');
-const users=require('../../models/userSchema')
+const users=require('../../models/userSchema');
+const sellProduct=require('../../models/sell_productsSchema');
 const multer = require('multer');
-const { Sequelize,Op } = require('sequelize');
+const { Sequelize,Op, where } = require('sequelize');
 
 
 
@@ -133,7 +134,35 @@ router.get("/resDetailsGet",async (req, res) => {
 
 router.get('/allProduct',async (req, res) => {
   const user_id = req.query.user_id;
-  
+
+  /*Create a join relation */
+  product.belongsTo(sellProduct,{
+    foreignKey:'productId',
+  });
+  sellProduct.hasMany(product,{
+    foreignKey: 'productId',
+  });
+  /* */
+  try{
+    const productData=await sellProduct.findAll({
+       include:{
+        model:product,
+        attributes:['productId','productName','productImage','description'],
+       },
+       where:{
+        manufactureId:user_id
+       }
+    })
+    res.json(productData);
+    console.log(productData);
+  }
+  catch(err){
+    console.log(err);
+  }
+
+
+
+
 });
 
 //bar chart details get of the restaurant manager home
