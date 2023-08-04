@@ -31,6 +31,10 @@ const event = sequelize.define('event', {
         foriegnKey:true,
     
     }
+    ,approved_state:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    }
  }
     ,
 
