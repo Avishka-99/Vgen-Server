@@ -3,6 +3,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
 const multer = require('multer');
 const path = require('path');
+const sellProduct = require('./sell_productsSchema');
 
 
 // Define the User model
@@ -43,5 +44,6 @@ row_category:{
     timestamps: false,
 });
 
+product.hasMany(sellProduct,{ foreignKey: 'productId' });
 
 module.exports = product;

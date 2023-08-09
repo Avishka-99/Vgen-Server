@@ -1,6 +1,7 @@
 
 const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
+const sellProduct = require('./sell_productsSchema');
 
 // Define the User model
 const productManufacture = sequelize.define('product_manufacture', {

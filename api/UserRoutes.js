@@ -8,11 +8,13 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const product = require('../models/productSchema');
 const restaurant = require('../models/restaurant_managerSchema');
-
+const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const {sendMail} = require('../include/NodemailerConfig');
 const {generateOtp} = require('../include/OtpGen');
+const sell_product = require('../models/sell_productsSchema');
+app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
 	const password = req.body.password;
@@ -127,20 +129,28 @@ const upload = multer({storage: storage});
 router.post('/productStore', upload.single('productImage'), async (req, res) => {
 	console.log(req.file);
 	try {
-		const {quantity, description, productName, price} = req.body;
+		const {description,quantity,price,productName} = req.body;
 		const {filename} = req.file;
-
-		await product.create({
-			quantity,
-			description,
+		const productData = await product.create({
 			productName,
+			description,
+			productImage: filename,});
+        await sell_product.create({
+			productId:productData.productId,
+			manufacturerId:productData.manufacturerId,
+			quantity,
 			price,
-			productImage: filename,
 		});
+  
 	} catch (err) {
 		console.log(err);
 	}
 });
+
+		
+
+
+//get product details
 
 router.get('/productGet', async (req, res) => {
 	try {
@@ -190,5 +200,6 @@ router.post('/verifyuser', async (req, res) => {
 		console.log(err);
 	}
 });
+
 
 module.exports = router;
