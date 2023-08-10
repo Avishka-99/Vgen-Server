@@ -21,6 +21,12 @@ orderId:{
         type: DataTypes.INTEGER,
         allowNull: true,
         foriegnKey:true,
+},price:{
+        type: DataTypes.FLOAT,
+        allowNull: true,
+},quantity:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
 },
 }
 , {

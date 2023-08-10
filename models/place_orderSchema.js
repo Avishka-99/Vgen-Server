@@ -24,6 +24,14 @@ const placeOrder = sequelize.define('place_order', {
         foriegnKey:true,
     
     },
+    price:{
+        type: DataTypes.FLOAT,
+        allowNull: true,
+    },
+    quantity:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    },
     } ,
  {
     timestamps: false,
