@@ -10,7 +10,7 @@ const users=require('../../models/userSchema');
 const sellProduct=require('../../models/sell_productsSchema');
 const multer = require('multer');
 const { Sequelize,Op, where } = require('sequelize');
-
+const sequelize = require('../../models/db');
 
 
 
@@ -280,6 +280,66 @@ router.get('/orderCountDetails',async (req, res) => {
     console.log(result);
     res.json(result);
     
+  } catch (err) {
+    console.log(err);
+  }
+    
+  });
+
+//
+
+//order type details
+router.get('/getOrderDetails',async (req, res) => {
+  const user_id = req.query.user_id;
+  try {
+    
+    const result_1= await sequelize.query(`
+    SELECT t.orderState, COUNT(t.orderId) as totalCount
+    FROM (
+      SELECT o.orderId, o.orderState
+      FROM orders o
+      INNER JOIN place_orders p ON p.orderId = o.orderId
+      WHERE p.resturantManagerId = :restaurantManagerId
+      GROUP BY o.orderId
+    ) t
+    GROUP BY t.orderState;
+  `, {
+    type: sequelize.QueryTypes.SELECT,
+    replacements: {
+      restaurantManagerId: user_id
+    }
+  });
+  const result_2 = await sequelize.query(
+      `
+      SELECT
+        o.orderId, o.date, o.time, o.orderState, CONCAT(u.firstName, " ", u.lastName) AS name
+      FROM
+        orders o
+      INNER JOIN
+        place_orders p ON p.orderId = o.orderId
+      INNER JOIN
+        users u ON u.userId = p.userId
+      WHERE
+        p.resturantManagerId = :restaurantManagerId
+        AND o.orderState = 0
+      GROUP BY
+        o.orderId;
+      `,
+      {
+        type: sequelize.QueryTypes.SELECT,
+        replacements: {
+          restaurantManagerId: user_id,
+        },
+      }
+    );
+
+ const responseData = {
+    result_1: result_1,
+    result_2: result_2,
+  };
+
+  res.json(responseData);
+  console.log(responseData);
   } catch (err) {
     console.log(err);
   }
