@@ -13,6 +13,8 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const {sendMail} = require('../include/NodemailerConfig');
 const {generateOtp} = require('../include/OtpGen');
+const order = require('../models/ordersSchema');
+const place_order	 = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
@@ -154,8 +156,14 @@ router.post('/productStore', upload.single('productImage'), async (req, res) => 
 
 router.get('/productGet', async (req, res) => {
 	try {
-		const productData = await product.findAll();
-		res.json(productData);
+		const products = await product.findAll({
+			include: {
+				model: sell_product,
+				as: 'sell_products',
+				foreignKey: 'productId'
+			}
+		});
+		res.json(products);
 	} catch (err) {
 		console.log(err);
 	}
@@ -200,6 +208,43 @@ router.post('/verifyuser', async (req, res) => {
 		console.log(err);
 	}
 });
+
+
+// Define the association between place_order and order
+place_order.hasMany(order, { foreignKey: 'orderId' });
+order.belongsTo(place_order, { foreignKey: 'orderId' });
+
+router.post('/orderPost', async (req, res) => {
+  try {
+    const { userId, productId, quantity, price, orderDate, orderStatus } = req.body;
+
+    // Create a record in the place_order table
+   
+
+    // Create a record in the order table
+    const orderData = await order.create({
+      productId,
+      quantity,
+      amount: price, // Use 'amount' instead of 'price' if that's the correct field name in your 'order' model
+      orderDate,
+      orderStatus,
+    });
+	const placeOrderData = await place_order.create({
+		orderId: orderData.orderId, // Use the generated orderId from place_order
+		userId,
+		productId,
+		
+	  });
+
+    res.json({ placeOrderData, orderData });
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: 'An error occurred while creating the order.' });
+  }
+});
+
+module.exports = router;
+
 
 
 module.exports = router;

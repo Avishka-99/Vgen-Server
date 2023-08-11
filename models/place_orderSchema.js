@@ -7,22 +7,21 @@ const placeOrder = sequelize.define('place_order', {
     orderId:{
         type: DataTypes.INTEGER,
         allowNull: false,
-        primaryKey: true,
         foriegnKey:true,
-        autoIncrement:true,
+        references: {
+            model: 'order',
+                 key: 'orderId'
+          }
+
     },productId:{
         type: DataTypes.INTEGER,
         allowNull: true,
-        foriegnKey:true,
     },resturantManagerId:{
         type: DataTypes.INTEGER,
         allowNull: true,
-        foriegnKey:true,
     },userId:{
         type: DataTypes.INTEGER,
         allowNull: true,
-        foriegnKey:true,
-    
     },
     } ,
  {

@@ -10,27 +10,16 @@ const product = require('./productSchema');
 
 
 const sellProduct = sequelize.define('sell_product', {
-    sellId:{
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    primaryKey: true,
-    autoIncrement: true
-},
  productId:{
     type: DataTypes.INTEGER,
+    primaryKey: true,
+    foriegnKey: true,
     allowNull: false,
     reference:{
         model:product,
         key:'productId'
     }
          
-},manufactureId:{
-    type: DataTypes.INTEGER,
-    allowNull: false,
-    reference:{
-        model:product_manufacture,
-        key:'productManufactureId'
-
 },quantity:{
         type: DataTypes.FLOAT,    
         allowNull: true
@@ -39,7 +28,7 @@ const sellProduct = sequelize.define('sell_product', {
         allowNull: true
  },
 },
-},    
+    
 {
     timestamps: false,
 });
