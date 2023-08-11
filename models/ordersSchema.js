@@ -38,7 +38,16 @@ const orders = sequelize.define('orders', {
 },deliveryFee:{
        type: DataTypes.FLOAT,
        allowNull: true
-}
+},deliveryDate:{
+       type: DataTypes.DATE,
+       allowNull: true
+},DeliveryTime:{
+       type: DataTypes.TIME,
+       allowNull: true
+},deliveryState:{
+       type: DataTypes.TINYINT,
+       allowNull: true
+},
 },
  {
     timestamps: false,
