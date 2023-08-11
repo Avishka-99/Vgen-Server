@@ -38,7 +38,12 @@ const restaurantManager = sequelize.define('restaurant_manager', {
         //time
         type:DataTypes.TIME,
         allowNull: true,
- },
+ },image:{
+
+       type:DataTypes.STRING,
+       allowNull:true,
+ }
+
 }, {
     timestamps: false,
 });
