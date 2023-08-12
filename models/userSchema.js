@@ -36,10 +36,13 @@ const User = sequelize.define('user', {
         type: DataTypes.INTEGER,
         allowNull: true
     },
-    // },profilePicture:{
-    //     type: DataTypes.STRING,
-    //     allowNull: true
-    // },
+    status:{
+        type:DataTypes.STRING,
+        allowNull:true
+    },profilePicture:{
+        type: DataTypes.STRING,
+        allowNull: true
+    },
 
 }, {
     timestamps: false,
