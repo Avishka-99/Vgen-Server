@@ -38,7 +38,7 @@ router.post("/signinuser", (req, res) => {
                 };
                 const secretKey = 'Avishka';
                 const token = jwt.sign(payload, secretKey, { expiresIn: '10h' });
-                const response = { type, token };
+                const response = { type, token};
                 res.send(response);
             } else {
                 res.send("202");
@@ -64,7 +64,7 @@ router.post("/registeruser", (req, res) => {
         } else {
             User.create({ 
                 email: email,
-                 password: hash ,
+                password: hash ,
                 firstName:firstName,
                 lastName:lastName,
                 nic:nic,

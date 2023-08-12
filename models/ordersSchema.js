@@ -4,7 +4,7 @@ const sequelize = require('./db');
 
 // Define the User model
 const orders = sequelize.define('orders', {
- ordersId:{
+ orderId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
