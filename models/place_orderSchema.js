@@ -4,14 +4,13 @@ const sequelize = require('./db');
 
 // Define the User model
 const placeOrder = sequelize.define('place_order', {
+
     orderId:{
         type: DataTypes.INTEGER,
         allowNull: false,
+        primaryKey: true,
         foriegnKey:true,
-        references: {
-            model: 'order',
-                 key: 'orderId'
-          }
+        autoIncrement: true,
 
     },productId:{
         type: DataTypes.INTEGER,
