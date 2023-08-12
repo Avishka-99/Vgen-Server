@@ -8,7 +8,11 @@ const orders = sequelize.define('order', {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
-              foriegnKey:true,     
+              foriegnKey:true,   
+              references: {
+                     model: 'place_orders',
+                     key: 'orderId'
+              } 
  },quantity:{
         type: DataTypes.INTEGER,
         allowNull: true

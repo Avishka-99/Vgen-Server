@@ -16,6 +16,7 @@ const {generateOtp} = require('../include/OtpGen');
 const order = require('../models/ordersSchema');
 const place_order = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
+const feed = require('../models/feedsSchema');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
@@ -215,21 +216,23 @@ router.post('/orderPost', async (req, res) => {
 	try {
 		const {userId, productId, quantity, price, orderDate, orderStatus} = req.body;
 
-		// Create a record in the place_order table
+    // Create a record in the place_order table
+   
 
-		// Create a record in the order table
-		const orderData = await order.create({
-			productId,
-			quantity,
-			amount: price, // Use 'amount' instead of 'price' if that's the correct field name in your 'order' model
-			orderDate,
-			orderStatus,
-		});
-		const placeOrderData = await place_order.create({
-			orderId: orderData.orderId, // Use the generated orderId from place_order
-			userId,
-			productId,
-		});
+    // Create a record in the order table
+    const orderData = await order.create({
+     // Use the generated orderId from place_order
+		userId,
+		productId,
+    });
+	const placeOrderData = await place_order.create({
+		productId,
+		quantity,
+		amount: price, // Use 'amount' instead of 'price' if that's the correct field name in your 'order' model
+		orderDate,
+		orderStatus,
+		
+	  });
 
 		res.json({placeOrderData, orderData});
 	} catch (err) {
@@ -237,5 +240,90 @@ router.post('/orderPost', async (req, res) => {
 		res.status(500).json({error: 'An error occurred while creating the order.'});
 	}
 });
-module.exports = router;
+//post image add
+const storage1 = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './uploads/feed');
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
+});
+const upload1 = multer({storage: storage1});
 
+//create post
+router.post('/createPost', upload1.single('feedImage'), async (req, res) => {
+	console.log(req.file);
+	try {
+		const {userId,feedName,description} = req.body;
+		const {filename} = req.file;
+		const feedData = await feed.create({
+			userId,
+			feedName,
+			description,
+			feedImage: filename,
+		});
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//get post
+router.get('/getFeed', async (req, res) => {
+	try {
+		const feedData = await feed.findAll();
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+  
+//delete post
+router.delete('/deleteFeed/:id', async (req, res) => {
+	try {
+		const feedData = await feed.destroy({
+			where: {
+				feedId: req.params.id,
+			},
+		});
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//update post
+router.put('/updateFeed/:id', async (req, res) => {
+	try {
+		const feedData = await feed.update(
+			{
+				feedName: req.body.feedName,
+				description: req.body.description,
+			},
+			{
+				where: {
+					feedId: req.params.id,
+				},
+			}
+		);
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//get user by userId
+router.get('/getUser/:id', async (req, res) => {
+	try {
+		const userData = await User.findAll({
+			where: {
+				userId: req.params.id,
+			},
+		});
+		res.json(userData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+
+module.exports = router;
