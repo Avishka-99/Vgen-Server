@@ -237,7 +237,5 @@ router.post('/orderPost', async (req, res) => {
 		res.status(500).json({error: 'An error occurred while creating the order.'});
 	}
 });
-
 module.exports = router;
 
-module.exports = router;

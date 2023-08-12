@@ -5,6 +5,18 @@ const bodyParser = require('body-parser');
 const app = express();
 
 const userRoutes = require('./api/UserRoutes');
+const deliveryRoutes=require('./api/delivery/deliveryRoutes')
+const path = require('path');
+
+
+var data = myFunction();
+console.log(data);
+app.use(cors());
+app.use(express.json());
+app.use(bodyParser.urlencoded({ extended: true }));
+app.use('/api',userRoutes);
+app.use('/api',deliveryRoutes)
+app.use("/uploads",express.static("./uploads"));
 const restaurantRoutes = require('./api/restaurant/restaurantRoutes');
 const customerRoutes = require('./api/customer/customerRoutes');
 const paymentRoutes = require('./api/PaymentRoutes');
@@ -15,7 +27,6 @@ const path = require('path');
 app.use(cors());
 app.use(express.json());
 app.use(bodyParser.urlencoded({extended: true}));
-app.use('/api', userRoutes);
 app.use('/api', restaurantRoutes);
 app.use('/api', customerRoutes);
 app.use('/api', paymentRoutes);
