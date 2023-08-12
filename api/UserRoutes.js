@@ -14,7 +14,7 @@ const multer = require('multer');
 const {sendMail} = require('../include/NodemailerConfig');
 const {generateOtp} = require('../include/OtpGen');
 const order = require('../models/ordersSchema');
-const place_order	 = require('../models/place_orderSchema');
+const place_order = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
 const feed = require('../models/feedsSchema');
 app.use(bodyParser.json());
@@ -49,6 +49,7 @@ router.post('/signinuser', (req, res) => {
 							res.send('Not verified');
 						} else {
 							const type = result[0].userRole;
+							const userID = result[0].userId;
 							const payload = {
 								userId: result[0].userId,
 								password: result[0].password,
@@ -56,7 +57,7 @@ router.post('/signinuser', (req, res) => {
 							};
 							const secretKey = 'Avishka';
 							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token};
+							const response = {type, token , userID};
 							res.send(response);
 						}
 					} else {
@@ -132,26 +133,23 @@ const upload = multer({storage: storage});
 router.post('/productStore', upload.single('productImage'), async (req, res) => {
 	console.log(req.file);
 	try {
-		const {description,quantity,price,productName} = req.body;
+		const {description, quantity, price, productName} = req.body;
 		const {filename} = req.file;
 		const productData = await product.create({
 			productName,
 			description,
-			productImage: filename,});
-        await sell_product.create({
-			productId:productData.productId,
-			manufacturerId:productData.manufacturerId,
+			productImage: filename,
+		});
+		await sell_product.create({
+			productId: productData.productId,
+			manufacturerId: productData.manufacturerId,
 			quantity,
 			price,
 		});
-  
 	} catch (err) {
 		console.log(err);
 	}
 });
-
-		
-
 
 //get product details
 
@@ -161,8 +159,8 @@ router.get('/productGet', async (req, res) => {
 			include: {
 				model: sell_product,
 				as: 'sell_products',
-				foreignKey: 'productId'
-			}
+				foreignKey: 'productId',
+			},
 		});
 		res.json(products);
 	} catch (err) {
@@ -210,14 +208,13 @@ router.post('/verifyuser', async (req, res) => {
 	}
 });
 
-
 // Define the association between place_order and order
-place_order.hasMany(order, { foreignKey: 'orderId' });
-order.belongsTo(place_order, { foreignKey: 'orderId' });
+place_order.hasMany(order, {foreignKey: 'orderId'});
+order.belongsTo(place_order, {foreignKey: 'orderId'});
 
 router.post('/orderPost', async (req, res) => {
-  try {
-    const { userId, productId, quantity, price, orderDate, orderStatus } = req.body;
+	try {
+		const {userId, productId, quantity, price, orderDate, orderStatus} = req.body;
 
     // Create a record in the place_order table
    
@@ -237,11 +234,11 @@ router.post('/orderPost', async (req, res) => {
 		
 	  });
 
-    res.json({ placeOrderData, orderData });
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: 'An error occurred while creating the order.' });
-  }
+		res.json({placeOrderData, orderData});
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'An error occurred while creating the order.'});
+	}
 });
 //post image add
 const storage1 = multer.diskStorage({
