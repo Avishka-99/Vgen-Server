@@ -10,8 +10,6 @@ const placeOrder = sequelize.define('place_order', {
         allowNull: false,
         primaryKey: true,
         foriegnKey:true,
-        autoIncrement: true,
-
     },productId:{
         type: DataTypes.INTEGER,
         allowNull: true,

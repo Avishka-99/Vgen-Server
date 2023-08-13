@@ -17,6 +17,7 @@ const order = require('../models/ordersSchema');
 const place_order = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
 const feed = require('../models/feedsSchema');
+const { or } = require('sequelize');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
@@ -214,32 +215,43 @@ order.belongsTo(place_order, {foreignKey: 'orderId'});
 
 router.post('/orderPost', async (req, res) => {
 	try {
-		const {userId, productId, quantity, price, orderDate, orderStatus} = req.body;
+		const {userId,productId,quantity,amount,date,time,status } = req.body;
 
-    // Create a record in the place_order table
-   
+		// Create a record in the order table
+		const orderData = await order.create({
+			totalQuantity:quantity,
+			amount: amount, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
+			date:date,
+			time:time,
+			orderState:status,
 
-    // Create a record in the order table
-    const orderData = await order.create({
-     // Use the generated orderId from place_order
-		userId,
-		productId,
-    });
-	const placeOrderData = await place_order.create({
-		productId,
-		quantity,
-		amount: price, // Use 'amount' instead of 'price' if that's the correct field name in your 'order' model
-		orderDate,
-		orderStatus,
-		
-	  });
+			// other fields...
+		});
+		const decrementQuantity = await sell_product.decrement('quantity', {
+			by: quantity,
+			where: {
+				productId: productId,
+			},
+		});
+        
 
-		res.json({placeOrderData, orderData});
+		// Create a record in the place_order table
+		const placeOrderData = await place_order.create({
+			userId,
+			productId: productId, // Use the 'productId' from the 'product' table
+			quantity:quantity,
+            orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
+		});
+
+		res.json({ placeOrderData, orderData,decrementQuantity });
+		console.log(placeOrderData);
+		console.log(orderData);
 	} catch (err) {
 		console.log(err);
-		res.status(500).json({error: 'An error occurred while creating the order.'});
+		res.status(500).json({ error: 'An error occurred while creating the order.' });
 	}
 });
+
 //post image add
 const storage1 = multer.diskStorage({
 	destination: function (req, file, cb) {
