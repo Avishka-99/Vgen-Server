@@ -5,6 +5,8 @@ const app = express();
 const multer = require('multer');
 const product = require('../../models/productSchema');
 const sell_product=require('../../models/sell_productsSchema')
+const orders = require('../../models/ordersSchema');
+const raw_placeOrders = require('../../models/raw_place_orderSchema');
 const sequelize = require('../../models/db');
 // product store
 const storage = multer.diskStorage({
@@ -47,6 +49,8 @@ router.post('/rowProductStore', upload.single('productImage'), async (req, res) 
 		console.log(err);
 	}
 });
+//
+
 
 
 router.get('/allRowProduct', async (req, res) => {
@@ -76,6 +80,42 @@ router.get('/allRowProduct', async (req, res) => {
 		console.log(err);
 	}
 });
+
+
+//get all order id relevant manufacture
+
+router.get('/getAllOrderIDRelevantManufacture', async (req, res) => {
+	const user_id = req.query.user_id;
+	/*Create a join relation */
+	orders.belongsTo(raw_placeOrders, {
+		foreignKey: 'orderId',
+	});
+	raw_placeOrders.hasMany(orders, {
+		foreignKey: 'orderId',
+	});
+	/* */
+	try {
+		const result = await orders.findAll({
+			attributes: ['orderId'],
+			include: [
+				{
+					model: raw_placeOrders,
+					attributes: [],
+					where: {
+						productManufactureId: user_id,
+					},
+				},
+			],
+			group: ['raw_place_order.orderId'],
+		});
+
+	    res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
 
 
 
