@@ -342,13 +342,13 @@ router.get('/getOrderDetails', async (req, res) => {
 	}
 });
 
-  //more details of order
-  router.get('/getOrderMoreDetails',async (req,res)=>{
-    const order_id=req.query.order_id;
-    const restaurantManagerId=req.query.user_id
-     try{
-        const result_3=await sequelize.query(
-          `
+//more details of order
+router.get('/getOrderMoreDetails', async (req, res) => {
+	const order_id = req.query.order_id;
+	const restaurantManagerId = req.query.user_id;
+	try {
+		const result_3 = await sequelize.query(
+			`
           SELECT p.orderId,pr.*,p.price,p.quantity FROM 
           place_orders p 
           INNER JOIN products pr ON p.productId=pr.productId 
@@ -357,17 +357,17 @@ router.get('/getOrderDetails', async (req, res) => {
             AND p.orderId= :orderId
          
           `,
-          {
-            type: sequelize.QueryTypes.SELECT,
-            replacements: {
-              restaurantManagerId: restaurantManagerId,
-              orderId:order_id,
-            },
-          }
-        );
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: restaurantManagerId,
+					orderId: order_id,
+				},
+			}
+		);
 
-      const result_4=await sequelize.query(
-        `
+		const result_4 = await sequelize.query(
+			`
         SELECT
           o.orderId, o.date, o.time, o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,u.contactNo, CONCAT(u.homeNo," ",u.street," ",u.city) as address,u.profilePicture 
         FROM
@@ -383,36 +383,36 @@ router.get('/getOrderDetails', async (req, res) => {
         GROUP BY
           o.orderId;
         `,
-        {
-          type: sequelize.QueryTypes.SELECT,
-          replacements: {
-            restaurantManagerId: restaurantManagerId,
-            orderId:order_id,
-          },
-        }
-      );
-      const responseData = {
-        result_3: result_3,
-        result_4: result_4,
-      };
-    
-      res.json(responseData);
-      console.log(responseData);
-    }catch(err){
-      console.log(err);
-    }
-  });
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: restaurantManagerId,
+					orderId: order_id,
+				},
+			}
+		);
+		const responseData = {
+			result_3: result_3,
+			result_4: result_4,
+		};
+
+		res.json(responseData);
+		console.log(responseData);
+	} catch (err) {
+		console.log(err);
+	}
+});
 
 //
 
+//get sorted order details
 
-  //get sorted order details
-
-  router.get('/getOrderSortedDetails',async (req, res) => {
-    const user_id = req.query.user_id;
-    const order_type= req.query.order_type;
-    try {
-      const result_1= await sequelize.query(`
+router.get('/getOrderSortedDetails', async (req, res) => {
+	const user_id = req.query.user_id;
+	const order_type = req.query.order_type;
+	try {
+		const result_1 = await sequelize.query(
+			`
       SELECT t.orderState, COUNT(t.orderId) as totalCount
       FROM (
         SELECT o.orderId, o.orderState
@@ -422,14 +422,16 @@ router.get('/getOrderDetails', async (req, res) => {
         GROUP BY o.orderId
       ) t
       GROUP BY t.orderState;
-    `, {
-      type: sequelize.QueryTypes.SELECT,
-      replacements: {
-        restaurantManagerId: user_id
-      }
-    });
-      const result_2 = await sequelize.query(
-        `
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		const result_2 = await sequelize.query(
+			`
         SELECT
           o.orderId, o.date, o.time, o.orderState,o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
         FROM
@@ -445,38 +447,37 @@ router.get('/getOrderDetails', async (req, res) => {
         GROUP BY
           o.orderId;
         `,
-        {
-          type: sequelize.QueryTypes.SELECT,
-          replacements: {
-            restaurantManagerId: user_id,
-            orderType: order_type
-          },
-        }
-      );
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+					orderType: order_type,
+				},
+			}
+		);
 
-      const responseData = {
-        result_1: result_1,
-        result_2: result_2,
-      };
-    
-      res.json(responseData);
-      console.log(responseData);
-    } catch (err) {
-      console.log(err);
-    }
-      
-    });
+		const responseData = {
+			result_1: result_1,
+			result_2: result_2,
+		};
 
-  //
+		res.json(responseData);
+		console.log(responseData);
+	} catch (err) {
+		console.log(err);
+	}
+});
 
+//
 
-  //get most order with limit
-  
-  router.get('/getMostOrderCountWithLimit',async (req, res) => {
-    const user_id = req.query.user_id;
-    
-    try {
-      const Q_count_L= await sequelize.query(`
+//get most order with limit
+
+router.get('/getMostOrderCountWithLimit', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const Q_count_L = await sequelize.query(
+			`
       SELECT pr.*, p.productId,p.resturantManagerId,p.orderId,SUM(p.quantity) AS count 
       FROM orders o
       INNER JOIN place_orders p 
@@ -486,29 +487,31 @@ router.get('/getOrderDetails', async (req, res) => {
       GROUP BY p.productId 
       ORDER by count DESC 
       LIMIT 1
-    `, {
-      type: sequelize.QueryTypes.SELECT,
-      replacements: {
-        restaurantManagerId: user_id
-      }
-    });
-      res.json(Q_count_L);
-      console.log(Q_count_L);
-    } catch (err) {
-      console.log(err);
-    }
-      
-    });
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		res.json(Q_count_L);
+		console.log(Q_count_L);
+	} catch (err) {
+		console.log(err);
+	}
+});
 
-  //
+//
 
-   //get most order without limit
-  
-   router.get('/getMostOrderCountWithOutLimit',async (req, res) => {
-    const user_id = req.query.user_id;
-    
-    try {
-      const Q_count= await sequelize.query(`
+//get most order without limit
+
+router.get('/getMostOrderCountWithOutLimit', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const Q_count = await sequelize.query(
+			`
       SELECT pr.*, p.productId,p.resturantManagerId,p.orderId,SUM(p.quantity) AS count 
       FROM orders o
       INNER JOIN place_orders p 
@@ -517,6 +520,7 @@ router.get('/getOrderDetails', async (req, res) => {
       p.resturantManagerId = :restaurantManagerId
       GROUP BY p.productId 
       ORDER by count DESC 
+
     `, {
       type: sequelize.QueryTypes.SELECT,
       replacements: {
@@ -704,10 +708,12 @@ router.get('/getComplain', async (req, res) => {
 	  });
        res.json(complain_result);
 	   console.log(complain_result);
+
 	} catch (err) {
 		console.log(err);
 	}
 });
+
 
 module.exports = router;
 

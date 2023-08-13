@@ -11,9 +11,9 @@ const path = require('path');
 const sellProduct = sequelize.define('sell_product', {
  productId:{
     type: DataTypes.INTEGER,
+   
     allowNull: false,
     primaryKey: true,
-    foriegnKey:true,
          
 }, manufactureId:{
     type: DataTypes.INTEGER,
