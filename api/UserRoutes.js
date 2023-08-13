@@ -13,7 +13,10 @@ const bcrypt = require('bcrypt');
 const multer = require('multer');
 const {sendMail} = require('../include/NodemailerConfig');
 const {generateOtp} = require('../include/OtpGen');
+const order = require('../models/ordersSchema');
+const place_order = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
+const feed = require('../models/feedsSchema');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
@@ -46,6 +49,7 @@ router.post('/signinuser', (req, res) => {
 							res.send('Not verified');
 						} else {
 							const type = result[0].userRole;
+							const userID = result[0].userId;
 							const payload = {
 								userId: result[0].userId,
 								password: result[0].password,
@@ -53,7 +57,7 @@ router.post('/signinuser', (req, res) => {
 							};
 							const secretKey = 'Avishka';
 							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token};
+							const response = {type, token , userID};
 							res.send(response);
 						}
 					} else {
@@ -129,33 +133,36 @@ const upload = multer({storage: storage});
 router.post('/productStore', upload.single('productImage'), async (req, res) => {
 	console.log(req.file);
 	try {
-		const {description,quantity,price,productName} = req.body;
+		const {description, quantity, price, productName} = req.body;
 		const {filename} = req.file;
 		const productData = await product.create({
 			productName,
 			description,
-			productImage: filename,});
-        await sell_product.create({
-			productId:productData.productId,
-			manufacturerId:productData.manufacturerId,
+			productImage: filename,
+		});
+		await sell_product.create({
+			productId: productData.productId,
+			manufacturerId: productData.manufacturerId,
 			quantity,
 			price,
 		});
-  
 	} catch (err) {
 		console.log(err);
 	}
 });
 
-		
-
-
 //get product details
 
 router.get('/productGet', async (req, res) => {
 	try {
-		const productData = await product.findAll();
-		res.json(productData);
+		const products = await product.findAll({
+			include: {
+				model: sell_product,
+				as: 'sell_products',
+				foreignKey: 'productId',
+			},
+		});
+		res.json(products);
 	} catch (err) {
 		console.log(err);
 	}
@@ -196,6 +203,123 @@ router.post('/verifyuser', async (req, res) => {
 			}
 		});
 		//res.json(resData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+// Define the association between place_order and order
+place_order.hasMany(order, {foreignKey: 'orderId'});
+order.belongsTo(place_order, {foreignKey: 'orderId'});
+
+router.post('/orderPost', async (req, res) => {
+	try {
+		const {userId, productId, quantity, price, orderDate, orderStatus} = req.body;
+
+    // Create a record in the place_order table
+   
+
+    // Create a record in the order table
+    const orderData = await order.create({
+     // Use the generated orderId from place_order
+		userId,
+		productId,
+    });
+	const placeOrderData = await place_order.create({
+		productId,
+		quantity,
+		amount: price, // Use 'amount' instead of 'price' if that's the correct field name in your 'order' model
+		orderDate,
+		orderStatus,
+		
+	  });
+
+		res.json({placeOrderData, orderData});
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'An error occurred while creating the order.'});
+	}
+});
+//post image add
+const storage1 = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './uploads/feed');
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
+});
+const upload1 = multer({storage: storage1});
+
+//create post
+router.post('/createPost', upload1.single('feedImage'), async (req, res) => {
+	console.log(req.file);
+	try {
+		const {userId,feedName,description} = req.body;
+		const {filename} = req.file;
+		const feedData = await feed.create({
+			userId,
+			feedName,
+			description,
+			feedImage: filename,
+		});
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//get post
+router.get('/getFeed', async (req, res) => {
+	try {
+		const feedData = await feed.findAll();
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+  
+//delete post
+router.delete('/deleteFeed/:id', async (req, res) => {
+	try {
+		const feedData = await feed.destroy({
+			where: {
+				feedId: req.params.id,
+			},
+		});
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//update post
+router.put('/updateFeed/:id', async (req, res) => {
+	try {
+		const feedData = await feed.update(
+			{
+				feedName: req.body.feedName,
+				description: req.body.description,
+			},
+			{
+				where: {
+					feedId: req.params.id,
+				},
+			}
+		);
+		res.json(feedData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//get user by userId
+router.get('/getUser/:id', async (req, res) => {
+	try {
+		const userData = await User.findAll({
+			where: {
+				userId: req.params.id,
+			},
+		});
+		res.json(userData);
 	} catch (err) {
 		console.log(err);
 	}

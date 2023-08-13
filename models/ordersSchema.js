@@ -3,13 +3,16 @@ const sequelize = require('./db');
 
 
 // Define the User model
-const orders = sequelize.define('orders', {
+const orders = sequelize.define('order', {
  orderId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
-        foriegnKey:true,
-        autoIncrement:true,
+              foriegnKey:true,   
+              references: {
+                     model: 'place_orders',
+                     key: 'orderId'
+              } 
  },quantity:{
         type: DataTypes.INTEGER,
         allowNull: true
