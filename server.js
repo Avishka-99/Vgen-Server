@@ -8,6 +8,7 @@ const app = express();
 const userRoutes = require('./api/UserRoutes');
 const restaurantRoutes = require('./api/restaurant/restaurantRoutes');
 const customerRoutes = require('./api/customer/customerRoutes');
+const farmerRoutes=require('./api/farmer/farmerRoutes')
 const path = require('path');
 
 //var data = myFunction();
@@ -18,6 +19,7 @@ app.use(bodyParser.urlencoded({extended: true}));
 app.use('/api', userRoutes);
 app.use('/api', restaurantRoutes);
 app.use('/api',customerRoutes);
+app.use('/api',farmerRoutes);
 app.use('/uploads', express.static('./uploads'));
 
 

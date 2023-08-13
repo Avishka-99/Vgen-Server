@@ -24,7 +24,10 @@ const rateFood = sequelize.define('rate_food', {
     },description:{
         type: DataTypes.STRING,
         allowNull: true
-    },
+    },rate_count:{
+        type: DataTypes.INTEGER,
+        allowNull: true,
+    }
 },
 
  {

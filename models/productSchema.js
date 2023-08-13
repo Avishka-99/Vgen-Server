@@ -38,6 +38,12 @@ productImage:{
 row_category:{
        type: DataTypes.STRING,
        allowNull: true
+},cooking_time:{
+       type: DataTypes.TIME,
+       allowNull: true
+},ingredient:{
+       type: DataTypes.STRING,
+       allowNull: true
 },
 },     
 {
