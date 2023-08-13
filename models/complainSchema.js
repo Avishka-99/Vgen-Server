@@ -21,6 +21,13 @@ const complain = sequelize.define('complain', {
 },description:{
         type: DataTypes.STRING,
         allowNull: true
+},orderId:{
+        type: DataTypes.INTEGER,
+        foriegnKey:true,
+        allowNull: false
+},photo:{
+        type: DataTypes.STRING,
+        allowNull: true
 }
     }
     ,

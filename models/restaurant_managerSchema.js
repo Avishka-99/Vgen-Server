@@ -1,6 +1,6 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
+
 
 // Define the User model
 const restaurantManager = sequelize.define('restaurant_manager', {
@@ -42,6 +42,9 @@ const restaurantManager = sequelize.define('restaurant_manager', {
 
        type:DataTypes.STRING,
        allowNull:true,
+ },services:{
+       type:DataTypes.INTEGER,
+       allowNull:false,
  }
 
 }, {

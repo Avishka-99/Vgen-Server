@@ -1,7 +1,6 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
-const sellProduct = require('./sell_productsSchema');
+
 
 // Define the User model
 const productManufacture = sequelize.define('product_manufacture', {
@@ -30,7 +29,17 @@ const productManufacture = sequelize.define('product_manufacture', {
         //time
         type:DataTypes.TIME,
         allowNull: true
-    }
+    },image:{
+
+        type:DataTypes.STRING,
+        allowNull:true,
+  },services:{
+        type:DataTypes.INTEGER,
+        allowNull:false,
+  },shopName:{
+    type:DataTypes.STRING,
+    allowNull:true,
+}
     }
     ,
 
