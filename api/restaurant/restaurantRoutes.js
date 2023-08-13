@@ -15,7 +15,7 @@ const check_complain=require('../../models/check_complainSchema');
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
 const sequelize = require('../../models/db');
-const { count } = require('console');
+
 
 // product store
 const storage = multer.diskStorage({
@@ -30,15 +30,16 @@ const upload = multer({storage: storage});
 router.post('/productAdd', upload.single('productImage'), async (req, res) => {
 	const transaction = await sequelize.transaction();
     const product_category="food";
+	const {quantity, description, productName, price,category,user_id}= req.body;
+	const {filename} = req.file;
+	
 	try {
-		const {quantity, description, productName, price,category,user_id}= req.body;
-		const {filename} = req.file;
-      
+	    
 		const createdProduct = await product.create({
 			description,
 			productName,
 			productImage: filename,
-            product_category: product_category,
+            product_category,
             vegan_category:category,
 		},{transaction});
         
@@ -60,6 +61,7 @@ router.post('/productAdd', upload.single('productImage'), async (req, res) => {
 	}
 	
 });
+//
 
 //table view details gets of the restaurant manager home
 router.get('/resDetailsGet', async (req, res) => {
@@ -602,7 +604,7 @@ router.get('/getReservationDetails', async (req, res) => {
 
 //get all order id relevant restaurant
 
-router.get('/getAllComplainIDRelevantRestaurant', async (req, res) => {
+router.get('/getAllOrderIDRelevantRestaurant', async (req, res) => {
 	const user_id = req.query.user_id;
 	/*Create a join relation */
 	orders.belongsTo(placeOrders, {
@@ -690,7 +692,7 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 
 //get complain
 
-//reservation details
+//complain details
 router.get('/getComplain', async (req, res) => {
 	const user_id = req.query.user_id;
 
@@ -714,6 +716,67 @@ router.get('/getComplain', async (req, res) => {
 	}
 });
 
+//sorted order by order type
+router.get('/getAcceptOrders',async (req, res) => {
+    const user_id = req.query.user_id;
+    
+    try {
+      const result_1= await sequelize.query(`
+      SELECT t.orderState, COUNT(t.orderId) as totalCount
+      FROM (
+        SELECT o.orderId, o.orderState
+        FROM orders o
+        INNER JOIN place_orders p ON p.orderId = o.orderId
+        WHERE p.resturantManagerId = :restaurantManagerId
+        GROUP BY o.orderId
+      ) t
+      GROUP BY t.orderState;
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: {
+        restaurantManagerId: user_id
+      }
+    });
+      const result_2 = await sequelize.query(
+        `
+        SELECT
+          o.orderId, o.date, o.time, o.orderState,o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
+        FROM
+          orders o
+        INNER JOIN
+          place_orders p ON p.orderId = o.orderId
+        INNER JOIN
+          users u ON u.userId = p.userId
+        WHERE
+          p.resturantManagerId = :restaurantManagerId
+          AND o.orderState = 1
+          AND o.orderType= :orderType
+        GROUP BY
+          o.orderId;
+        `,
+        {
+          type: sequelize.QueryTypes.SELECT,
+          replacements: {
+            restaurantManagerId: user_id,
+            orderType: order_type
+          },
+        }
+      );
+
+      const responseData = {
+        result_1: result_1,
+        result_2: result_2,
+      };
+    
+      res.json(responseData);
+      console.log(responseData);
+    } catch (err) {
+      console.log(err);
+    }
+      
+    });
+
+  //
 
 module.exports = router;
 

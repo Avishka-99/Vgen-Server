@@ -9,11 +9,8 @@ const orders = sequelize.define('order', {
         allowNull: false,
         primaryKey: true,
               foriegnKey:true,   
-              references: {
-                     model: 'place_orders',
-                     key: 'orderId'
-              } 
- },quantity:{
+            autoIncrement: true
+ },totalQuantity:{
         type: DataTypes.INTEGER,
         allowNull: true
  },date:{
