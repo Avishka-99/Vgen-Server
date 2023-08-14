@@ -215,11 +215,12 @@ order.belongsTo(place_order, {foreignKey: 'orderId'});
 
 router.post('/orderPost', async (req, res) => {
 	try {
-		const {userId,productId,quantity,amount,date,time,status } = req.body;
+		const {userId,productId,quantity,amount,date,time,status,orderType } = req.body;
 
 		// Create a record in the order table
 		const orderData = await order.create({
 			totalQuantity:quantity,
+			orderType:orderType,
 			amount: amount, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
 			date:date,
 			time:time,
@@ -233,17 +234,24 @@ router.post('/orderPost', async (req, res) => {
 				productId: productId,
 			},
 		});
-        
-
+        const restaurantobjId = await sell_product.findOne({
+			attributes: ['manufactureId'],
+			where: {
+				productId: productId,
+			},
+		});
+      const  restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
 		// Create a record in the place_order table
 		const placeOrderData = await place_order.create({
 			userId,
-			productId: productId, // Use the 'productId' from the 'product' table
+			productId: productId,
+			resturantManagerId:restaurantId, // Use the 'productId' from the 'product' table
 			quantity:quantity,
+			price:amount,
             orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
 		});
 
-		res.json({ placeOrderData, orderData,decrementQuantity });
+		res.json({  orderData,placeOrderData,decrementQuantity });
 		console.log(placeOrderData);
 		console.log(orderData);
 	} catch (err) {
