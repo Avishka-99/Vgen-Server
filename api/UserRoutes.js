@@ -16,8 +16,10 @@ const {generateOtp} = require('../include/OtpGen');
 const order = require('../models/ordersSchema');
 const place_order = require('../models/place_orderSchema');
 const sell_product = require('../models/sell_productsSchema');
+const vegan_user = require('../models/vegan_userSchema');
 const feed = require('../models/feedsSchema');
-const { or } = require('sequelize');
+const delivery_person = require('../models/delivery_personSchema');
+const {or} = require('sequelize');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
@@ -34,7 +36,7 @@ router.post('/signinuser', (req, res) => {
 				res.send('Please check email');
 			}
 			{
-				bcrypt.compare(password, result[0].password, (err, result_2) => {
+				bcrypt.compare(password, result[0].password, async (err, result_2) => {
 					if (result_2) {
 						if (result[0].status != 'verified') {
 							const otp = generateOtp(6);
@@ -49,6 +51,8 @@ router.post('/signinuser', (req, res) => {
 							var mailStatus = sendMail(otp, email);
 							res.send('Not verified');
 						} else {
+							var lang = 0;
+							var long = 0;
 							const type = result[0].userRole;
 							const userID = result[0].userId;
 							const payload = {
@@ -56,9 +60,20 @@ router.post('/signinuser', (req, res) => {
 								password: result[0].password,
 								time: new Date(),
 							};
+							if (type == 'Customer') {
+								await vegan_user.findAll({
+									raw: true,
+									where: {
+										userId: userID,
+									},
+								}).then((result)=>{
+									lang=result[0].latitude,
+									long=result[0].longitude
+								});
+							}
 							const secretKey = 'Avishka';
 							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token , userID};
+							const response = {type, token, userID,lang,long};
 							res.send(response);
 						}
 					} else {
@@ -79,6 +94,8 @@ router.post('/registeruser', (req, res) => {
 	const nic = req.body.age;
 	const userRole = req.body.userRole;
 	const contactNo = req.body.contactNo;
+	const latitude = req.body.latitude;
+	const longitude = req.body.longitude;
 	//res.send(userRole)
 	// const profilePicture=req.body.profilePicture;
 	bcrypt.hash(password, 10, (err, hash) => {
@@ -89,10 +106,10 @@ router.post('/registeruser', (req, res) => {
 				where: {
 					email: email,
 				},
-			}).then((result) => {
-				console.log(result.length);
+			}).then(async (result) => {
+				//console.log(result.length);
 				if (result.length == 0) {
-					User.create({
+					await User.create({
 						email: email,
 						password: hash,
 						firstName: firstName,
@@ -102,7 +119,7 @@ router.post('/registeruser', (req, res) => {
 						contactNo: contactNo,
 					});
 					const otp = generateOtp(6);
-					User.update(
+					await User.update(
 						{status: otp},
 						{
 							where: {
@@ -110,8 +127,32 @@ router.post('/registeruser', (req, res) => {
 							},
 						}
 					);
+					await User.findAll({
+						raw: true,
+						where: {
+							email: email,
+						},
+					}).then(async (result) => {
+						const userId = result[0].userId;
+						const role = result[0].userRole;
+						console.log(role);
+						if (role == 'Customer') {
+							await vegan_user.create({
+								userId: userId,
+								veganCategory: 'vegan',
+								latitude: latitude,
+								longitude: longitude,
+							});
+						} else if (role == 'Delivery') {
+							await delivery_person.create({
+								deliveryPersonId: userId,
+								latitude: latitude,
+								longitude: longitude,
+							});
+						}
+					});
 					var mailStatus = sendMail(otp, email);
-					console.log(mailStatus);
+					//console.log(mailStatus);
 					res.send({type: 'success', message: 'Account created successfully'});
 					//res.send(mailStatus);
 				} else {
@@ -222,9 +263,9 @@ router.post('/orderPost', async (req, res) => {
 			totalQuantity:quantity,
 			orderType:orderType,
 			amount: amount, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
-			date:date,
-			time:time,
-			orderState:status,
+			date: date,
+			time: time,
+			orderState: status,
 
 			// other fields...
 		});
@@ -256,7 +297,7 @@ router.post('/orderPost', async (req, res) => {
 		console.log(orderData);
 	} catch (err) {
 		console.log(err);
-		res.status(500).json({ error: 'An error occurred while creating the order.' });
+		res.status(500).json({error: 'An error occurred while creating the order.'});
 	}
 });
 
@@ -275,7 +316,7 @@ const upload1 = multer({storage: storage1});
 router.post('/createPost', upload1.single('feedImage'), async (req, res) => {
 	console.log(req.file);
 	try {
-		const {userId,feedName,description} = req.body;
+		const {userId, feedName, description} = req.body;
 		const {filename} = req.file;
 		const feedData = await feed.create({
 			userId,
@@ -298,7 +339,6 @@ router.get('/getFeed', async (req, res) => {
 	}
 });
 
-  
 //delete post
 router.delete('/deleteFeed/:id', async (req, res) => {
 	try {
@@ -356,6 +396,5 @@ router.get('/getProfile/:id', async (req, res) => {
 		console.log(err);
 	}
 });
-
 
 module.exports = router;
