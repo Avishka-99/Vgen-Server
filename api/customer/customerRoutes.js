@@ -78,7 +78,7 @@ router.post('/updatedb', async (req, res) => {
 router.post('/fetchproduct', async (req, res) => {
 	const productId = req.body.id;
 	const id = req.body.restaurantId;
-	console.log(id)
+	console.log(id);
 	product.hasMany(sellProducts, {
 		foreignKey: 'productId',
 	});
