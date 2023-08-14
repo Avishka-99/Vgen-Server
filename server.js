@@ -31,5 +31,3 @@ app.use('/uploads', express.static('./uploads'));
 app.listen(5001, () => {
 	console.log('Server listening on port 5001');
 });
-
-const adminRoutes = require('./api/admin/adminRoutes');
