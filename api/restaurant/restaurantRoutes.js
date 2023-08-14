@@ -7,10 +7,15 @@ const placeOrders = require('../../models/place_orderSchema');
 const product = require('../../models/productSchema');
 const payments = require('../../models/paymentsSchema');
 const users = require('../../models/userSchema');
+const manufacture=require('../../models/product_manufactureSchema');
 const sellProduct = require('../../models/sell_productsSchema');
+const reservation=require('../../models/reservationSchema');
+const complain=require('../../models/complainSchema');
+const check_complain=require('../../models/check_complainSchema');
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
 const sequelize = require('../../models/db');
+
 
 // product store
 const storage = multer.diskStorage({
@@ -23,22 +28,40 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 router.post('/productAdd', upload.single('productImage'), async (req, res) => {
-	console.log(req.file);
+	const transaction = await sequelize.transaction();
+    const product_category="food";
+	const {quantity, description, productName, price,category,user_id}= req.body;
+	const {filename} = req.file;
+	
 	try {
-		const {quantity, description, productName, price} = req.body;
-		const {filename} = req.file;
-
-		await product.create({
-			quantity,
+	    
+		const createdProduct = await product.create({
 			description,
 			productName,
-			price,
 			productImage: filename,
-		});
+            product_category,
+            vegan_category:category,
+		},{transaction});
+        
+        const lastInsertedProductId = createdProduct.productId;
+      
+        await sellProduct.create({
+			productId: lastInsertedProductId,
+			manufactureId:user_id,
+			price,
+            quantity,
+        },{transaction});
+
+        await transaction.commit();
+
 	} catch (err) {
+		
+        await transaction.rollback();
 		console.log(err);
 	}
+	
 });
+//
 
 //table view details gets of the restaurant manager home
 router.get('/resDetailsGet', async (req, res) => {
@@ -221,7 +244,7 @@ router.get('/orderCountDetails', async (req, res) => {
 		// const today = currentDate.getDate();
 
 		const FirstLevelGroup = await orders.findAll({
-			attributes: ['quantity', 'orderId', 'amount'],
+			attributes: ['totalQuantity', 'orderId', 'amount'],
 			include: [
 				{
 					model: placeOrders,
@@ -243,7 +266,7 @@ router.get('/orderCountDetails', async (req, res) => {
 
 		for (const order of FirstLevelGroup) {
 			total_count++;
-			total_quantity += order.dataValues.quantity;
+			total_quantity += order.dataValues.totalQuantity;
 			total_amount += parseInt(order.dataValues.amount); // Convert the amount to an integer before adding
 		}
 
@@ -288,7 +311,7 @@ router.get('/getOrderDetails', async (req, res) => {
 		const result_2 = await sequelize.query(
 			`
       SELECT
-        o.orderId, o.date, o.time, o.orderState,o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
+        o.orderId, o.date, o.time, o.orderState,o.orderType,o.totalQuantity ,CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
       FROM
         orders o
       INNER JOIN
@@ -499,20 +522,261 @@ router.get('/getMostOrderCountWithOutLimit', async (req, res) => {
       p.resturantManagerId = :restaurantManagerId
       GROUP BY p.productId 
       ORDER by count DESC 
-    `,
-			{
-				type: sequelize.QueryTypes.SELECT,
-				replacements: {
-					restaurantManagerId: user_id,
-				},
-			}
-		);
-		res.json(Q_count);
-		console.log(Q_count);
+
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: {
+        restaurantManagerId: user_id
+      }
+    });
+      res.json(Q_count);
+      console.log(Q_count);
+    } catch (err) {
+      console.log(err);
+    }
+      
+    });
+
+  //
+
+  
+   //get most order without limit
+  
+   router.get('/getShopDetails',async (req, res) => {
+  
+    try {
+      const shopData=  await manufacture.findAll({
+		attributes: ['productManufactureId','image','shopName'],
+		
+	});
+      res.json(shopData);
+      console.log(shopData);
+    } catch (err) {
+      console.log(err);
+    }
+      
+    });
+
+	//
+	//reservation details
+router.get('/getReservationDetails', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const result_1 = await sequelize.query(`
+		SELECT r.*, CONCAT(u.firstName, " ", u.lastName) AS fullName FROM reservations r 
+		INNER join users u on u.userId=r.userId
+		WHERE
+		r.resturantManagerId = :restaurantManagerId
+		AND r.reservationState=0
+	  `, {
+		type: sequelize.QueryTypes.SELECT,
+		replacements: {
+		  restaurantManagerId: user_id
+		}
+	
+		});
+		const result_2 = await sequelize.query(`
+		SELECT  reservationState,COUNT(reservationState) AS count FROM reservations
+		WHERE
+		resturantManagerId = :restaurantManagerId
+		GROUP BY reservationState 
+		
+	  `, {
+		type: sequelize.QueryTypes.SELECT,
+		replacements: {
+		  restaurantManagerId: user_id
+		}
+	  });
+
+		const responseData = {
+			result_1: result_1,
+			result_2: result_2,
+		};
+
+		res.json(responseData);
+		console.log(responseData);
 	} catch (err) {
 		console.log(err);
 	}
 });
 
+
+//get all order id relevant restaurant
+
+router.get('/getAllOrderIDRelevantRestaurant', async (req, res) => {
+	const user_id = req.query.user_id;
+	/*Create a join relation */
+	orders.belongsTo(placeOrders, {
+		foreignKey: 'orderId',
+	});
+	placeOrders.hasMany(orders, {
+		foreignKey: 'orderId',
+	});
+	/* */
+	try {
+		const result = await orders.findAll({
+			attributes: ['orderId'],
+			include: [
+				{
+					model: placeOrders,
+					as: 'place_order',
+					attributes: [],
+					where: {
+						resturantManagerId: user_id,
+					},
+				},
+			],
+			group: ['place_order.orderId'],
+		});
+
+	    res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
 //
+//complain add
+const complain_ing_storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './uploads/complains/restaurant');
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
+});
+const complain_ing= multer({complain_ing_storage: complain_ing_storage});
+router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
+	const transaction = await sequelize.transaction();
+    const currentDate = new Date();
+
+	// Formatting date as "Day-Month-Year"
+	const day = String(currentDate.getDate()).padStart(2, '0');
+	const month = String(currentDate.getMonth() + 1).padStart(2, '0');
+	const year = currentDate.getFullYear();
+	const formattedDate = `${day}-${month}-${year}`;
+
+	// Formatting time as "Hour:Minute:Second"
+	const hours = String(currentDate.getHours()).padStart(2, '0');
+	const minutes = String(currentDate.getMinutes()).padStart(2, '0');
+	const seconds = String(currentDate.getSeconds()).padStart(2, '0');
+	const formattedTime = `${hours}:${minutes}:${seconds}`;
+
+	try {
+		const {orderId, description,user_id} = req.body;
+		const {filename} = req.file;
+       
+		const createdComplain= await complain.create({
+			date:formattedDate,
+			description:description,
+			time:formattedTime,
+			photo: filename,
+            orderId:orderId,
+		},{transaction});
+
+        const lastInsertedComplainId= createdComplain.complainId;
+      
+        await check_complain.create({
+			complainId: lastInsertedComplainId,
+			userId:user_id,
+		},{transaction});
+
+        await transaction.commit();
+
+	} catch (err) {
+        await transaction.rollback();
+		console.log(err);
+	}
+});
+
+//get complain
+
+//complain details
+router.get('/getComplain', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		
+		const complain_result = await sequelize.query(`
+		SELECT c.*, CONCAT(u.firstName, " ",u.lastName) As fullName,cc.action,cc.date as action_date FROM 
+		complains c INNER JOIN check_complains cc ON c.complainId=cc.complainId INNER JOIN users u ON u.userId=cc.userId
+		WHERE
+		cc.userId = :userId`, {
+		type: sequelize.QueryTypes.SELECT,
+		replacements: {
+			userId: user_id
+		}
+	  });
+       res.json(complain_result);
+	   console.log(complain_result);
+
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//sorted order by order type
+router.get('/getAcceptOrders',async (req, res) => {
+    const user_id = req.query.user_id;
+    
+    try {
+      const result_1= await sequelize.query(`
+      SELECT t.orderState, COUNT(t.orderId) as totalCount
+      FROM (
+        SELECT o.orderId, o.orderState
+        FROM orders o
+        INNER JOIN place_orders p ON p.orderId = o.orderId
+        WHERE p.resturantManagerId = :restaurantManagerId
+        GROUP BY o.orderId
+      ) t
+      GROUP BY t.orderState;
+    `, {
+      type: sequelize.QueryTypes.SELECT,
+      replacements: {
+        restaurantManagerId: user_id
+      }
+    });
+      const result_2 = await sequelize.query(
+        `
+        SELECT
+          o.orderId, o.date, o.time, o.orderState,o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
+        FROM
+          orders o
+        INNER JOIN
+          place_orders p ON p.orderId = o.orderId
+        INNER JOIN
+          users u ON u.userId = p.userId
+        WHERE
+          p.resturantManagerId = :restaurantManagerId
+          AND o.orderState = 1
+          AND o.orderType= :orderType
+        GROUP BY
+          o.orderId;
+        `,
+        {
+          type: sequelize.QueryTypes.SELECT,
+          replacements: {
+            restaurantManagerId: user_id,
+            orderType: order_type
+          },
+        }
+      );
+
+      const responseData = {
+        result_1: result_1,
+        result_2: result_2,
+      };
+    
+      res.json(responseData);
+      console.log(responseData);
+    } catch (err) {
+      console.log(err);
+    }
+      
+    });
+
+  //
+
 module.exports = router;
+

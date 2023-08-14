@@ -8,8 +8,9 @@ const orders = sequelize.define('order', {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
-              foriegnKey:true,     
- },quantity:{
+              foriegnKey:true,   
+            autoIncrement: true
+ },totalQuantity:{
         type: DataTypes.INTEGER,
         allowNull: true
  },date:{

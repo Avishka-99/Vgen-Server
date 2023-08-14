@@ -30,9 +30,9 @@ reservationId:{
 timePeriod:{
     type: DataTypes.STRING,
     allowNull: true
-}
-,
-}, {
+},
+}, 
+{
     timestamps: false,
 });
 
