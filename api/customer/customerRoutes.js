@@ -8,6 +8,8 @@ const User = require('../../models/userSchema');
 const product = require('../../models/productSchema');
 const restaurant = require('../../models/restaurant_managerSchema');
 const sellProducts = require('../../models/sell_productsSchema');
+const orders = require('../../models/ordersSchema');
+const place_order = require('../../models/place_orderSchema');
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
 		foreignKey: 'resturantManagerId',
@@ -62,7 +64,13 @@ router.post('/updatedb', async (req, res) => {
 	const quantity = req.body.quantity;
 	const productId = req.body.id;
 	const id = req.body.restaurantId;
-	console.log("req body",req.body);
+	const lang = req.body.lang;
+	const long = req.body.long;
+	const userId = req.body.userId;
+	const date = req.body.date;
+	const time = req.body.time;
+	const status = req.body.status;
+	console.log('req body', req.body);
 	sellProducts
 		.decrement('quantity', {
 			by: quantity,
@@ -72,7 +80,30 @@ router.post('/updatedb', async (req, res) => {
 			},
 		})
 		.then((result) => {
-			res.send('success');
+			orders
+				.create({
+					totalQuantity: quantity,
+					amount: amount, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
+					date: date,
+					time: time,
+					orderState: status,
+
+					// other fields...
+				})
+				.then((result_2) => {
+					place_order.create({
+						userId: userId,
+						productId: productId, // Use the 'productId' from the 'product' table
+						quantity: quantity,
+						orderId: result_2.orderId,
+						price: amount,
+						resturantManagerId: id, // Use the 'orderId' from the 'order' table
+					});
+					res.send('success');
+				});
+
+			// console.log(result.id);
+			// res.send('success');
 		});
 });
 router.post('/fetchproduct', async (req, res) => {
