@@ -412,6 +412,9 @@ router.get('/getOrderMoreDetails', async (req, res) => {
 router.get('/getOrderSortedDetails', async (req, res) => {
 	const user_id = req.query.user_id;
 	const order_type = req.query.order_type;
+	const orderState = req.query.orderState;
+	
+	
 	try {
 		const result_1 = await sequelize.query(
 			`
@@ -716,7 +719,7 @@ router.get('/getComplain', async (req, res) => {
 	}
 });
 
-//sorted order by order type
+//sorted order by order state =1
 router.get('/getAcceptOrders',async (req, res) => {
     const user_id = req.query.user_id;
     
@@ -750,7 +753,7 @@ router.get('/getAcceptOrders',async (req, res) => {
         WHERE
           p.resturantManagerId = :restaurantManagerId
           AND o.orderState = 1
-          AND o.orderType= :orderType
+          
         GROUP BY
           o.orderId;
         `,
@@ -758,7 +761,7 @@ router.get('/getAcceptOrders',async (req, res) => {
           type: sequelize.QueryTypes.SELECT,
           replacements: {
             restaurantManagerId: user_id,
-            orderType: order_type
+            
           },
         }
       );
@@ -777,6 +780,38 @@ router.get('/getAcceptOrders',async (req, res) => {
     });
 
   //
+
+  //update the order state
+  router.post('/updateOrderState', async (req, res) => {
+	try {
+	  const order_id = req.body.order_id;
+	  const order_state = req.body.order_state;
+  
+	  console.log('Received order_id:', order_id);
+	  console.log('Received order_state:', order_state);
+  
+	  await orders.update(
+		{
+		  orderState: order_state
+		},
+		{
+		  where: {
+			orderId: order_id
+		  }
+		}
+	  ).then((result) => {
+		console.log('Update result:', result);
+		res.send('success');
+	  });
+	} catch (err) {
+	  console.log('Error:', err);
+	  res.status(500).send('Error updating order state');
+	}
+  });
+  
+
+ //
+
 
 module.exports = router;
 
