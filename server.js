@@ -7,9 +7,10 @@ const deliveryRoutes = require('./api/delivery/deliveryRoutes');
 const restaurantRoutes = require('./api/restaurant/restaurantRoutes');
 const customerRoutes = require('./api/customer/customerRoutes');
 
-const farmerRoutes=require('./api/farmer/farmerRoutes')
+const farmerRoutes = require('./api/farmer/farmerRoutes');
 
 const paymentRoutes = require('./api/PaymentRoutes');
+const adminRoutes = require('./api/admin/adminRoutes');
 
 const path = require('path');
 app.use(cors());
@@ -19,15 +20,14 @@ app.use('/api', userRoutes);
 app.use('/api', deliveryRoutes);
 app.use('/api', restaurantRoutes);
 
-app.use('/api',farmerRoutes);
+app.use('/api', farmerRoutes);
 
 app.use('/api', customerRoutes);
 app.use('/api', paymentRoutes);
+app.use('/api', adminRoutes);
 
 app.use('/uploads', express.static('./uploads'));
 
 app.listen(5001, () => {
 	console.log('Server listening on port 5001');
 });
-
-const adminRoutes = require('./api/admin/adminRoutes');
