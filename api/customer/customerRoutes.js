@@ -62,7 +62,6 @@ router.post('/updatedb', async (req, res) => {
 	const quantity = req.body.quantity;
 	const productId = req.body.id;
 	const id = req.body.restaurantId;
-	console.log('UPDATE DB=========');
 	console.log("req body",req.body);
 	sellProducts
 		.decrement('quantity', {
