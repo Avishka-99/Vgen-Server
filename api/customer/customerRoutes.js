@@ -118,7 +118,7 @@ router.post('/fetchproduct', async (req, res) => {
 	});
 	product
 		.findAll({
-			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'cooking_time','ingredient'],
+			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'cooking_time', 'ingredient'],
 			include: {
 				model: sellProducts,
 				attributes: ['manufactureId', 'price', 'quantity'],
