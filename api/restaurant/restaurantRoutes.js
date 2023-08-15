@@ -784,9 +784,10 @@ router.get('/getAcceptOrders',async (req, res) => {
   //update the order state
   router.post('/updateOrderState', async (req, res) => {
 	try {
-	  const order_id = req.body.order_id;
-	  const order_state = req.body.order_state;
-  
+	//   const order_id = req.body.order_id;
+	//   const order_state = req.body.order_state;
+      const order_id = 12;
+	  const order_state = 2;
 	  console.log('Received order_id:', order_id);
 	  console.log('Received order_state:', order_state);
   
