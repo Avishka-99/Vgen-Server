@@ -8,6 +8,8 @@ const sequelize = require('../../models/db');
 const { type } = require('os');
 
 
+
+
 router.get("/deliverDetails",async (req, res) => {
     try{
         const ordertData=await orders.findAll();
@@ -22,11 +24,14 @@ router.get("/deliverDetails",async (req, res) => {
 
 router.get("/deliveryOrders",async(req,res)=>{
     const userid=req.query.userid;
-    console.log("userr",userid)
+    const latitude=req.query.lat
+    const longitude=req.query.lon;
+    console.log("my location",longitude)
+    console.log("userrtttt",userid)
    try{
     const orderData=await sequelize.query(`SELECT
     orders.orderId,
-    orders.quantity,
+    orders.totalQuantity,
     orders.amount,
     orders.date,
     orders.time,
@@ -35,15 +40,15 @@ router.get("/deliveryOrders",async(req,res)=>{
     vegan_user.latitude AS vegan_latitude,
     vegan_user.longitude AS vegan_longitude,
     (SELECT users.street FROM users WHERE users.userId=place_orders.userId AND users.userRole='Customer') AS cust_Address,
-    (SELECT users.street FROM users WHERE users.userId=place_orders.resturantManagerId AND users.userRole='resturantManager') AS       rest_Address,
+    (SELECT users.street FROM users WHERE users.userId=place_orders.resturantManagerId AND users.userRole='resturantManager') AS rest_Address,
     users.firstName,
     (SELECT users.contactNo FROM users WHERE users.userId=place_orders.userId AND users.userRole='Customer') AS cust_contact,
-    (SELECT users.contactNo FROM users WHERE users.userId=place_orders.resturantManagerId AND users.userRole='resturantManager') AS   rest_contact,
-    restaurant_manager.latitude AS rest_latitude,
-    restaurant_manager.longitude AS rest_longitude,
-    restaurant_manager.resturantName,
-    restaurant_manager.openTime,
-    restaurant_manager.closeTime
+    (SELECT users.contactNo FROM users WHERE users.userId=place_orders.resturantManagerId AND users.userRole='resturantManager') AS rest_contact,
+    restaurant_managers.latitude AS rest_latitude,
+    restaurant_managers.longitude AS rest_longitude,
+    restaurant_managers.resturantName,
+    restaurant_managers.openTime,
+    restaurant_managers.closeTime
   FROM
     orders
   INNER JOIN
@@ -53,7 +58,7 @@ router.get("/deliveryOrders",async(req,res)=>{
   INNER JOIN
     users ON place_orders.userId = users.userId
   INNER JOIN
-    restaurant_manager ON place_orders.resturantManagerId = restaurant_manager.resturantManagerId
+    restaurant_managers ON place_orders.resturantManagerId = restaurant_managers.resturantManagerId
   
   WHERE
     orders.orderState = 2
@@ -61,9 +66,13 @@ router.get("/deliveryOrders",async(req,res)=>{
   `);
 
     const deliveryData=await sequelize.query(
-        `SELECT delivery_person.vehicleType,delivery_person.latitude,delivery_person.longitude,delivery_person.maxQuantity, delivery_person.availability 
-         FROM delivery_person WHERE delivery_person.deliveryPersonId=${userid};`
+        `SELECT delivery_persons.vehicleType,delivery_persons.latitude,delivery_persons.longitude,delivery_persons.maxQuantity, delivery_persons.availability 
+         FROM delivery_persons WHERE delivery_persons.deliveryPersonId=${userid};`
     )
+
+    // const udatelocation=await sequelize.query(`UPDATE delivery_persons SET delivery_persons.latitude=${latitude} ,
+    // delivery_persons.longitude=${longitude} 
+    // WHERE delivery_persons.deliveryPersonId=${userid};`)
 
     const result ={
         deliveryData:deliveryData,
@@ -101,14 +110,18 @@ router.get("/deliveryOrders",async(req,res)=>{
             const openTimeShop=neworderData[i][j].openTime
             const orderDate=neworderData[i][j].date
             const aroundTime=AroundTime(timeClose)
+           // console.log("dsfsdf",RestDistance)
+            //console.log("mmmm",VegenuserDistance)
            // console.log(aroundTime)
-            //console.log("open",openTimeShop)
-            //console.log("close",closetimeShop)
+             console.log("open",openTimeShop)
+             console.log("close",closetimeShop)
             // console.log("time clo",timeClose)
+            console.log("around",aroundTime)
+            //console.log(isTimeBetween(new Date(`${openTimeShop}`),new Date(`${closetimeShop}`),new Date(`${aroundTime}`)))
             // console.log()
             // console.log(orderDate)
            
-            if(VegenuserDistance<=10 && RestDistance<=10 && isTimeBetween(new Date(`1970-01-01T${openTimeShop}`),new Date(`1970-01-01T${closetimeShop}`),new Date(`1970-01-01T${aroundTime}`))&&areDatesEqual(new Date(orderDate),new Date())){
+            if(VegenuserDistance<=10 && areDatesEqual(new Date(orderDate),new Date())){
                // 
                 frontEnd_pass_orders.push(neworderData[i][j])
                 //console.log("distinc",distance)
@@ -152,6 +165,7 @@ router.get("/deliveryOrders",async(req,res)=>{
       
         // Calculate the total time in hours and minutes
         const totalHours = nowTime.getHours() + hoursToAdd.getHours();
+        //const totalHours24=totalHours % 12;
         const totalMinutes = nowTime.getMinutes() + hoursToAdd.getMinutes();
        
       
@@ -169,23 +183,7 @@ router.get("/deliveryOrders",async(req,res)=>{
 
       }
       //time check between open time and close time
-      function isTimeBetween(openTime,closeTime,targetTime) {
-        const targetHours = targetTime.getHours();
-        const targetMinutes = targetTime.getMinutes();
-  
-        const openHours = openTime.getHours();
-        const openMinutes = openTime.getMinutes();
-  
-        const closeHours = closeTime.getHours();
-        const closeMinutes = closeTime.getMinutes();
-
-            if ((targetHours > openHours || (targetHours === openHours && targetMinutes >= openMinutes)) &&
-                (targetHours < closeHours || (targetHours === closeHours && targetMinutes <= closeMinutes))) {
-                return true;
-            } else {
-                return false;
-            }
-      }
+     
       //
 
       //seme data check
