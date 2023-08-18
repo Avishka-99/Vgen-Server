@@ -813,6 +813,32 @@ router.get('/getAcceptOrders',async (req, res) => {
 
  //
 
+//get all raw products
+ router.get('/getAllRawProductsDetails', async (req, res) => {
+	
+	/*Create a join relation */
+	product.belongsTo(sellProduct, {
+		foreignKey: 'productId',
+	});
+	sellProduct.hasMany(product, {
+		foreignKey: 'productId',
+	});
+	/* */
+	try {
+		const productData = await sellProduct.findAll({
+			include: {
+				model: product
+			},where: {
+				product_category :'raw_food'
+			}	
+		});
+		res.json(productData);
+		console.log(productData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
 
 module.exports = router;
 
