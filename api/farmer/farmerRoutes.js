@@ -43,10 +43,11 @@ router.post('/rowProductStore', upload.single('productImage'), async (req, res) 
         },{transaction});
 
         await transaction.commit();
-
+        res.send({type:"success", message:"Product added Successfully"});
 	} catch (err) {
         await transaction.rollback();
 		console.log(err);
+		res.send({type:"error",message:"error Occurred"});
 	}
 });
 //
