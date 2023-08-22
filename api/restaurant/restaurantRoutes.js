@@ -11,6 +11,7 @@ const manufacture=require('../../models/product_manufactureSchema');
 const sellProduct = require('../../models/sell_productsSchema');
 const reservation=require('../../models/reservationSchema');
 const complain=require('../../models/complainSchema');
+const place_complain=require('../../models/place_complainSchema')
 const check_complain=require('../../models/check_complainSchema');
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
@@ -668,7 +669,8 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 
 	try {
 		const {orderId, description,user_id} = req.body;
-		const {filename} = req.file;
+		// const {filename} = req.file;
+		const filename = req.file ? req.file.filename : null;
        
 		const createdComplain= await complain.create({
 			date:formattedDate,
@@ -685,17 +687,24 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 			userId:user_id,
 		},{transaction});
 
+		await place_complain.create({
+			complainId:lastInsertedComplainId,
+			orderId:orderId,
+			userId:user_id
+		},{transaction})
+ 
         await transaction.commit();
-
+        res.send({type:"success", message:"Complain added Successfully"});
 	} catch (err) {
         await transaction.rollback();
 		console.log(err);
+		res.send({type:"error",message:"error Occurred"});
 	}
 });
 
-//get complain
+//
 
-//complain details
+//get complain complain details
 router.get('/getComplain', async (req, res) => {
 	const user_id = req.query.user_id;
 
@@ -718,6 +727,43 @@ router.get('/getComplain', async (req, res) => {
 		console.log(err);
 	}
 });
+//
+// delete complain
+router.delete('/deleteComplain',async (req, res) => {
+	const transaction = await sequelize.transaction();
+   
+
+	try {
+		const id = req.query.id;
+		
+       
+		await complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction});
+
+        await check_complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction});
+
+		await place_complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction})
+ 
+        await transaction.commit();
+        res.send({type:"success", message:"Complain delete Successfully"});
+	} catch (err) {
+        await transaction.rollback();
+		console.log(err);
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+//
 
 //sorted order by order state =1
 router.get('/getAcceptOrders',async (req, res) => {
