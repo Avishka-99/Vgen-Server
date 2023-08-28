@@ -685,17 +685,17 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 			},
 			{transaction}
 		);
-		const {orderId, description,user_id} = req.body;
-		// const {filename} = req.file;
-		const filename = req.file ? req.file.filename : null;
+		// const {orderId, description,user_id} = req.body;
+		// // const {filename} = req.file;
+		// const filename = req.file ? req.file.filename : null;
        
-		const createdComplain= await complain.create({
-			date:formattedDate,
-			description:description,
-			time:formattedTime,
-			photo: filename,
-            orderId:orderId,
-		},{transaction});
+		// const createdComplain= await complain.create({
+		// 	date:formattedDate,
+		// 	description:description,
+		// 	time:formattedTime,
+		// 	photo: filename,
+        //     orderId:orderId,
+		// },{transaction});
 
 		const lastInsertedComplainId = createdComplain.complainId;
 
