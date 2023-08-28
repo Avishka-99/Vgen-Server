@@ -7,8 +7,11 @@ const placeOrders = require('../../models/place_orderSchema');
 const product = require('../../models/productSchema');
 const payments = require('../../models/paymentsSchema');
 const users = require('../../models/userSchema');
-const manufacture=require('../../models/product_manufactureSchema');
+const manufacture = require('../../models/product_manufactureSchema');
 const sellProduct = require('../../models/sell_productsSchema');
+const reservation = require('../../models/reservationSchema');
+const complain = require('../../models/complainSchema');
+const check_complain = require('../../models/check_complainSchema');
 const reservation=require('../../models/reservationSchema');
 const complain=require('../../models/complainSchema');
 const place_complain=require('../../models/place_complainSchema')
@@ -16,7 +19,6 @@ const check_complain=require('../../models/check_complainSchema');
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
 const sequelize = require('../../models/db');
-
 
 // product store
 const storage = multer.diskStorage({
@@ -30,37 +32,39 @@ const storage = multer.diskStorage({
 const upload = multer({storage: storage});
 router.post('/productAdd', upload.single('productImage'), async (req, res) => {
 	const transaction = await sequelize.transaction();
-    const product_category="food";
-	const {quantity, description, productName, price,category,user_id}= req.body;
+	const product_category = 'food';
+	const {quantity, description, productName, price, category, user_id} = req.body;
 	const {filename} = req.file;
-	
+
 	try {
-	    
-		const createdProduct = await product.create({
-			description,
-			productName,
-			productImage: filename,
-            product_category,
-            vegan_category:category,
-		},{transaction});
-        
-        const lastInsertedProductId = createdProduct.productId;
-      
-        await sellProduct.create({
-			productId: lastInsertedProductId,
-			manufactureId:user_id,
-			price,
-            quantity,
-        },{transaction});
+		const createdProduct = await product.create(
+			{
+				description,
+				productName,
+				productImage: filename,
+				product_category,
+				vegan_category: category,
+			},
+			{transaction}
+		);
 
-        await transaction.commit();
+		const lastInsertedProductId = createdProduct.productId;
 
+		await sellProduct.create(
+			{
+				productId: lastInsertedProductId,
+				manufactureId: user_id,
+				price,
+				quantity,
+			},
+			{transaction}
+		);
+
+		await transaction.commit();
 	} catch (err) {
-		
-        await transaction.rollback();
+		await transaction.rollback();
 		console.log(err);
 	}
-	
 });
 //
 
@@ -414,8 +418,7 @@ router.get('/getOrderSortedDetails', async (req, res) => {
 	const user_id = req.query.user_id;
 	const order_type = req.query.order_type;
 	const orderState = req.query.orderState;
-	
-	
+
 	try {
 		const result_1 = await sequelize.query(
 			`
@@ -527,71 +530,73 @@ router.get('/getMostOrderCountWithOutLimit', async (req, res) => {
       GROUP BY p.productId 
       ORDER by count DESC 
 
-    `, {
-      type: sequelize.QueryTypes.SELECT,
-      replacements: {
-        restaurantManagerId: user_id
-      }
-    });
-      res.json(Q_count);
-      console.log(Q_count);
-    } catch (err) {
-      console.log(err);
-    }
-      
-    });
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		res.json(Q_count);
+		console.log(Q_count);
+	} catch (err) {
+		console.log(err);
+	}
+});
 
-  //
+//
 
-  
-   //get most order without limit
-  
-   router.get('/getShopDetails',async (req, res) => {
-  
-    try {
-      const shopData=  await manufacture.findAll({
-		attributes: ['productManufactureId','image','shopName'],
-		
-	});
-      res.json(shopData);
-      console.log(shopData);
-    } catch (err) {
-      console.log(err);
-    }
-      
-    });
+//get most order without limit
 
-	//
-	//reservation details
+router.get('/getShopDetails', async (req, res) => {
+	try {
+		const shopData = await manufacture.findAll({
+			attributes: ['productManufactureId', 'image', 'shopName'],
+		});
+		res.json(shopData);
+		console.log(shopData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+//reservation details
 router.get('/getReservationDetails', async (req, res) => {
 	const user_id = req.query.user_id;
 
 	try {
-		const result_1 = await sequelize.query(`
+		const result_1 = await sequelize.query(
+			`
 		SELECT r.*, CONCAT(u.firstName, " ", u.lastName) AS fullName FROM reservations r 
 		INNER join users u on u.userId=r.userId
 		WHERE
 		r.resturantManagerId = :restaurantManagerId
 		AND r.reservationState=0
-	  `, {
-		type: sequelize.QueryTypes.SELECT,
-		replacements: {
-		  restaurantManagerId: user_id
-		}
-	
-		});
-		const result_2 = await sequelize.query(`
+	  `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		const result_2 = await sequelize.query(
+			`
 		SELECT  reservationState,COUNT(reservationState) AS count FROM reservations
 		WHERE
 		resturantManagerId = :restaurantManagerId
 		GROUP BY reservationState 
 		
-	  `, {
-		type: sequelize.QueryTypes.SELECT,
-		replacements: {
-		  restaurantManagerId: user_id
-		}
-	  });
+	  `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
 
 		const responseData = {
 			result_1: result_1,
@@ -604,7 +609,6 @@ router.get('/getReservationDetails', async (req, res) => {
 		console.log(err);
 	}
 });
-
 
 //get all order id relevant restaurant
 
@@ -634,7 +638,7 @@ router.get('/getAllOrderIDRelevantRestaurant', async (req, res) => {
 			group: ['place_order.orderId'],
 		});
 
-	    res.json(result);
+		res.json(result);
 		console.log(result);
 	} catch (err) {
 		console.log(err);
@@ -650,10 +654,10 @@ const complain_ing_storage = multer.diskStorage({
 		cb(null, Date.now() + path.extname(file.originalname));
 	},
 });
-const complain_ing= multer({complain_ing_storage: complain_ing_storage});
+const complain_ing = multer({complain_ing_storage: complain_ing_storage});
 router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 	const transaction = await sequelize.transaction();
-    const currentDate = new Date();
+	const currentDate = new Date();
 
 	// Formatting date as "Day-Month-Year"
 	const day = String(currentDate.getDate()).padStart(2, '0');
@@ -668,25 +672,42 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 	const formattedTime = `${hours}:${minutes}:${seconds}`;
 
 	try {
-		const {orderId, description,user_id} = req.body;
-		// const {filename} = req.file;
-		const filename = req.file ? req.file.filename : null;
+		const {orderId, description, user_id} = req.body;
+		const {filename} = req.file;
+
+		const createdComplain = await complain.create(
+			{
+				date: formattedDate,
+				description: description,
+				time: formattedTime,
+				photo: filename,
+				orderId: orderId,
+			},
+			{transaction}
+		);
+		// const {orderId, description,user_id} = req.body;
+		// // const {filename} = req.file;
+		// const filename = req.file ? req.file.filename : null;
        
-		const createdComplain= await complain.create({
-			date:formattedDate,
-			description:description,
-			time:formattedTime,
-			photo: filename,
-            orderId:orderId,
-		},{transaction});
+		// const createdComplain= await complain.create({
+		// 	date:formattedDate,
+		// 	description:description,
+		// 	time:formattedTime,
+		// 	photo: filename,
+        //     orderId:orderId,
+		// },{transaction});
 
-        const lastInsertedComplainId= createdComplain.complainId;
-      
-        await check_complain.create({
-			complainId: lastInsertedComplainId,
-			userId:user_id,
-		},{transaction});
+		const lastInsertedComplainId = createdComplain.complainId;
 
+		await check_complain.create(
+			{
+				complainId: lastInsertedComplainId,
+				userId: user_id,
+			},
+			{transaction}
+		);
+
+		await transaction.commit();
 		await place_complain.create({
 			complainId:lastInsertedComplainId,
 			orderId:orderId,
@@ -696,33 +717,33 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
         await transaction.commit();
         res.send({type:"success", message:"Complain added Successfully"});
 	} catch (err) {
-        await transaction.rollback();
+		await transaction.rollback();
 		console.log(err);
-		res.send({type:"error",message:"error Occurred"});
 	}
 });
 
-//
+//get complain
 
-//get complain complain details
+//complain details
 router.get('/getComplain', async (req, res) => {
 	const user_id = req.query.user_id;
 
 	try {
-		
-		const complain_result = await sequelize.query(`
+		const complain_result = await sequelize.query(
+			`
 		SELECT c.*, CONCAT(u.firstName, " ",u.lastName) As fullName,cc.action,cc.date as action_date FROM 
 		complains c INNER JOIN check_complains cc ON c.complainId=cc.complainId INNER JOIN users u ON u.userId=cc.userId
 		WHERE
-		cc.userId = :userId`, {
-		type: sequelize.QueryTypes.SELECT,
-		replacements: {
-			userId: user_id
-		}
-	  });
-       res.json(complain_result);
-	   console.log(complain_result);
-
+		cc.userId = :userId`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					userId: user_id,
+				},
+			}
+		);
+		res.json(complain_result);
+		console.log(complain_result);
 	} catch (err) {
 		console.log(err);
 	}
@@ -766,11 +787,12 @@ router.delete('/deleteComplain',async (req, res) => {
 //
 
 //sorted order by order state =1
-router.get('/getAcceptOrders',async (req, res) => {
-    const user_id = req.query.user_id;
-    
-    try {
-      const result_1= await sequelize.query(`
+router.get('/getAcceptOrders', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const result_1 = await sequelize.query(
+			`
       SELECT t.orderState, COUNT(t.orderId) as totalCount
       FROM (
         SELECT o.orderId, o.orderState
@@ -780,14 +802,16 @@ router.get('/getAcceptOrders',async (req, res) => {
         GROUP BY o.orderId
       ) t
       GROUP BY t.orderState;
-    `, {
-      type: sequelize.QueryTypes.SELECT,
-      replacements: {
-        restaurantManagerId: user_id
-      }
-    });
-      const result_2 = await sequelize.query(
-        `
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		const result_2 = await sequelize.query(
+			`
         SELECT
           o.orderId, o.date, o.time, o.orderState,o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,o.amount
         FROM
@@ -803,61 +827,60 @@ router.get('/getAcceptOrders',async (req, res) => {
         GROUP BY
           o.orderId;
         `,
-        {
-          type: sequelize.QueryTypes.SELECT,
-          replacements: {
-            restaurantManagerId: user_id,
-            
-          },
-        }
-      );
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
 
-      const responseData = {
-        result_1: result_1,
-        result_2: result_2,
-      };
-    
-      res.json(responseData);
-      console.log(responseData);
-    } catch (err) {
-      console.log(err);
-    }
-      
-    });
+		const responseData = {
+			result_1: result_1,
+			result_2: result_2,
+		};
 
-  //
-
-  //update the order state
-  router.post('/updateOrderState', async (req, res) => {
-	try {
-	//   const order_id = req.body.order_id;
-	//   const order_state = req.body.order_state;
-      const order_id = 12;
-	  const order_state = 2;
-	  console.log('Received order_id:', order_id);
-	  console.log('Received order_state:', order_state);
-  
-	  await orders.update(
-		{
-		  orderState: order_state
-		},
-		{
-		  where: {
-			orderId: order_id
-		  }
-		}
-	  ).then((result) => {
-		console.log('Update result:', result);
-		res.send('success');
-	  });
+		res.json(responseData);
+		console.log(responseData);
 	} catch (err) {
-	  console.log('Error:', err);
-	  res.status(500).send('Error updating order state');
+		console.log(err);
 	}
-  });
-  
+});
 
- //
+//
+
+//update the order state
+router.post('/updateOrderState', async (req, res) => {
+	try {
+		//   const order_id = req.body.order_id;
+		//   const order_state = req.body.order_state;
+		const order_id = 15;
+		const order_state = 2;
+		console.log('Received order_id:', order_id);
+		console.log('Received order_state:', order_state);
+
+		await orders
+			.update(
+				{
+					orderState: order_state,
+				},
+				{
+					where: {
+						orderId: order_id,
+					},
+				}
+			)
+			.then((result) => {
+				console.log('Update result:', result);
+				res.send('success');
+			});
+	} catch (err) {
+		console.log('Error:', err);
+		res.status(500).send('Error updating order state');
+	}
+});
+
+//
 
 //get all raw products
  router.get('/getAllRawProductsDetails', async (req, res) => {
@@ -887,4 +910,3 @@ router.get('/getAcceptOrders',async (req, res) => {
 //
 
 module.exports = router;
-
