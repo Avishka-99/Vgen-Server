@@ -12,6 +12,10 @@ const sellProduct = require('../../models/sell_productsSchema');
 const reservation = require('../../models/reservationSchema');
 const complain = require('../../models/complainSchema');
 const check_complain = require('../../models/check_complainSchema');
+const reservation=require('../../models/reservationSchema');
+const complain=require('../../models/complainSchema');
+const place_complain=require('../../models/place_complainSchema')
+const check_complain=require('../../models/check_complainSchema');
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
 const sequelize = require('../../models/db');
@@ -681,6 +685,17 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 			},
 			{transaction}
 		);
+		const {orderId, description,user_id} = req.body;
+		// const {filename} = req.file;
+		const filename = req.file ? req.file.filename : null;
+       
+		const createdComplain= await complain.create({
+			date:formattedDate,
+			description:description,
+			time:formattedTime,
+			photo: filename,
+            orderId:orderId,
+		},{transaction});
 
 		const lastInsertedComplainId = createdComplain.complainId;
 
@@ -693,6 +708,14 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 		);
 
 		await transaction.commit();
+		await place_complain.create({
+			complainId:lastInsertedComplainId,
+			orderId:orderId,
+			userId:user_id
+		},{transaction})
+ 
+        await transaction.commit();
+        res.send({type:"success", message:"Complain added Successfully"});
 	} catch (err) {
 		await transaction.rollback();
 		console.log(err);
@@ -725,6 +748,43 @@ router.get('/getComplain', async (req, res) => {
 		console.log(err);
 	}
 });
+//
+// delete complain
+router.delete('/deleteComplain',async (req, res) => {
+	const transaction = await sequelize.transaction();
+   
+
+	try {
+		const id = req.query.id;
+		
+       
+		await complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction});
+
+        await check_complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction});
+
+		await place_complain.destroy({
+			where:{
+				complainId:id
+			}
+		},{transaction})
+ 
+        await transaction.commit();
+        res.send({type:"success", message:"Complain delete Successfully"});
+	} catch (err) {
+        await transaction.rollback();
+		console.log(err);
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+//
 
 //sorted order by order state =1
 router.get('/getAcceptOrders', async (req, res) => {
@@ -794,7 +854,7 @@ router.post('/updateOrderState', async (req, res) => {
 	try {
 		//   const order_id = req.body.order_id;
 		//   const order_state = req.body.order_state;
-		const order_id = 14;
+		const order_id = 15;
 		const order_state = 2;
 		console.log('Received order_id:', order_id);
 		console.log('Received order_state:', order_state);
@@ -820,6 +880,33 @@ router.post('/updateOrderState', async (req, res) => {
 	}
 });
 
+//
+
+//get all raw products
+ router.get('/getAllRawProductsDetails', async (req, res) => {
+	
+	/*Create a join relation */
+	product.belongsTo(sellProduct, {
+		foreignKey: 'productId',
+	});
+	sellProduct.hasMany(product, {
+		foreignKey: 'productId',
+	});
+	/* */
+	try {
+		const productData = await sellProduct.findAll({
+			include: {
+				model: product
+			},where: {
+				product_category :'raw_food'
+			}	
+		});
+		res.json(productData);
+		console.log(productData);
+	} catch (err) {
+		console.log(err);
+	}
+});
 //
 
 module.exports = router;
