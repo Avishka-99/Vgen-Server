@@ -118,6 +118,73 @@ router.get('/getAllOrderIDRelevantManufacture', async (req, res) => {
 });
 //
 
+//get manufacture order details
+router.get('/manufactureOrderDetails', async(req,res)=>{
+	const user_id = req.query.user_id;
+	try {
+		const result= await sequelize.query(
+		`SELECT o.orderId, o.date, o.time, o.amount, o.orderState, o.orderType,
+		CONCAT(u.firstName, ' ',u.lastName) AS customerName,
+		CONCAT(u.homeNo,'',u.street,'',u.city) AS address,
+		pay.status AS paymentStatus
+		FROM orders o 
+		INNER JOIN raw_place_orders p ON p.orderId=o.orderId 
+		INNER JOIN product_manufactures pm ON pm.productManufactureId=p.productManufactureId 
+		INNER JOIN users u ON u.userId=p.userId 
+		INNER JOIN payments pay ON pay.orderId=o.orderId 
+		WHERE pm.productManufactureId=:restaurantManagerId AND pay.userId=:restaurantManagerId
+
+		GROUP BY p.orderId
+     
+        `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+//get Manufacture dashboard counts
+router.get('/manufactureOrderCountsDetails', async(req,res)=>{
+	const user_id = req.query.user_id;
+	try {
+		const result= await sequelize.query(
+		`
+		SELECT COUNT(t.orderId) AS totalCount, SUM(t.amount) AS totalAmount
+		FROM (
+			SELECT o.orderId, o.amount, o.date
+			FROM orders o
+			INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+			WHERE p.productManufactureId = :restaurantManagerId
+			GROUP BY p.orderId
+		) t
+		WHERE t.date = CURRENT_DATE();
+     
+        `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
 
 
 module.exports = router;
