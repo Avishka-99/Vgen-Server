@@ -187,4 +187,109 @@ router.get('/manufactureOrderCountsDetails', async(req,res)=>{
 
 
 
+//get most order with limit
+
+router.get('/getManufactureMostOrderCountWithLimit', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const Q_count_L = await sequelize.query(
+			`
+      SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+      FROM raw_place_orders p 
+	  INNER JOIN orders o ON o.orderId=p.orderId
+      INNER JOIN products pr ON pr.productId=p.productId 
+      WHERE
+      p.productManufactureId = :productManufactureId
+	  AND o.date=CURRENT_DATE
+      GROUP BY p.productId 
+      ORDER by count DESC 
+      LIMIT 1
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(Q_count_L);
+		console.log(Q_count_L);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
+//get most order without limit
+
+router.get('/getManufactureMostOrderCountWithOutLimit', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const Q_count = await sequelize.query(
+			`
+			SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+			FROM raw_place_orders p 
+			INNER JOIN orders o ON o.orderId=p.orderId
+			INNER JOIN products pr ON pr.productId=p.productId 
+			WHERE
+			p.productManufactureId = :productManufactureId
+			AND o.date=CURRENT_DATE
+			GROUP BY p.productId 
+			ORDER by count DESC 
+   
+        `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(Q_count);
+		console.log(Q_count);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+//get most order type count
+
+router.get('/getManufactureMostOrderTypeCountToday', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const Q_count_L = await sequelize.query(
+			`
+			SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+			FROM (
+				SELECT o.orderId, o.amount, o.date,o.orderType
+				FROM orders o
+				INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+				WHERE p.productManufactureId = :productManufactureId
+				AND o.date = CURRENT_DATE()
+				GROUP BY p.orderId
+			) t
+			GROUP BY t.orderType
+    `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(Q_count_L);
+		console.log(Q_count_L);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
+
 module.exports = router;
