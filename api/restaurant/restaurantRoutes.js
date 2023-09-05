@@ -846,38 +846,7 @@ router.get('/getAcceptOrders', async (req, res) => {
 
 //
 
-//update the order state
-router.post('/updateOrderState', async (req, res) => {
-	try {
-		//   const order_id = req.body.order_id;
-		//   const order_state = req.body.order_state;
-		const order_id = 15;
-		const order_state = 2;
-		console.log('Received order_id:', order_id);
-		console.log('Received order_state:', order_state);
 
-		await orders
-			.update(
-				{
-					orderState: order_state,
-				},
-				{
-					where: {
-						orderId: order_id,
-					},
-				}
-			)
-			.then((result) => {
-				console.log('Update result:', result);
-				res.send('success');
-			});
-	} catch (err) {
-		console.log('Error:', err);
-		res.status(500).send('Error updating order state');
-	}
-});
-
-//
 
 //get all raw products
  router.get('/getAllRawProductsDetails', async (req, res) => {
