@@ -291,5 +291,286 @@ router.get('/getManufactureMostOrderTypeCountToday', async (req, res) => {
 
 //
 
+//get order count details
+
+router.get('/getManufactureMostOrderCountDetailsToday', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const result = await sequelize.query(
+			`
+				SELECT t.orderState, COUNT(t.orderId) as totalCount
+				FROM (
+					SELECT o.orderId, o.orderState
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :productManufactureId
+					AND o.date=CURRENT_DATE
+					GROUP BY o.orderId
+				) t
+				GROUP BY t.orderState
+			`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+//get order details in table
+
+router.get('/getManufactureMostOrderDetailsInTableToday', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const result = await sequelize.query(
+			`
+				SELECT
+					o.orderId, o.date, o.time, o.orderState,o.orderType, 
+					CONCAT(u.firstName, " ", u.lastName) AS name,o.amount,o.totalQuantity
+				FROM
+					orders o
+				INNER JOIN
+					raw_place_orders p ON p.orderId = o.orderId
+				INNER JOIN
+					users u ON u.userId = p.userId
+				WHERE
+					p.productManufactureId = :productManufactureId
+					AND o.orderState = 0
+					AND o.date=CURRENT_DATE
+				GROUP BY
+				o.orderId;
+    		`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+
+//more details of order
+router.get('/getManufactureOrderMoreDetails', async (req, res) => {
+	const order_id = req.query.order_id;
+	const Manufacture_id = req.query.user_id;
+	try {
+		const result_3 = await sequelize.query(
+			`
+			SELECT p.orderId,pr.*,p.price,p.quantity 
+			FROM raw_place_orders p 
+			INNER JOIN products pr ON p.productId=pr.productId 
+			WHERE
+			p.productManufactureId = :manufactureId
+			AND p.orderId= :orderId
+         
+          `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					manufactureId: Manufacture_id,
+					orderId: order_id,
+				},
+			}
+		);
+
+		const result_4 = await sequelize.query(
+			`
+        SELECT
+          o.orderId, o.date, o.time, o.orderType, CONCAT(u.firstName, " ", u.lastName) AS name,u.contactNo, CONCAT(u.homeNo," ",u.street," ",u.city) as address,u.profilePicture 
+        FROM
+          orders o
+        INNER JOIN
+		  raw_place_orders p ON p.orderId = o.orderId
+        INNER JOIN
+          users u ON u.userId = p.userId
+        WHERE
+          p.productManufactureId = :manufactureId
+          AND o.orderId= :orderId
+        GROUP BY
+          o.orderId;
+        `,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					manufactureId: Manufacture_id,
+					orderId: order_id,
+				},
+			}
+		);
+		const responseData = {
+			result_3: result_3,
+			result_4: result_4,
+		};
+
+		res.json(responseData);
+		console.log(responseData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
+//get order sorted details
+router.get('/getManufactureOrderDetailsInSortedByType', async (req, res) => {
+	const user_id = req.query.user_id;
+    const order_type = req.query.order_type;
+	try {
+		const result = await sequelize.query(
+			`
+				SELECT
+					o.orderId, o.date, o.time, o.orderState,o.orderType, 
+					CONCAT(u.firstName, " ", u.lastName) AS name,o.amount,o.totalQuantity
+				FROM
+					orders o
+				INNER JOIN
+					raw_place_orders p ON p.orderId = o.orderId
+				INNER JOIN
+					users u ON u.userId = p.userId
+				WHERE
+					p.productManufactureId = :productManufactureId
+					AND o.orderState = 0
+                    AND o.orderType=:order_type
+					AND o.date=CURRENT_DATE
+				GROUP BY
+				o.orderId;
+    		`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+					order_type:order_type
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+//get accepted order details
+router.get('/getManufactureAcceptedOrderDetailsInTableToday', async (req, res) => {
+	const user_id = req.query.user_id;
+
+	try {
+		const result = await sequelize.query(
+			`
+				SELECT
+					o.orderId, o.date, o.time, o.orderState,o.orderType, 
+					CONCAT(u.firstName, " ", u.lastName) AS name,o.amount,o.totalQuantity
+				FROM
+					orders o
+				INNER JOIN
+					raw_place_orders p ON p.orderId = o.orderId
+				INNER JOIN
+					users u ON u.userId = p.userId
+				WHERE
+					p.productManufactureId = :productManufactureId
+					AND o.orderState = 1
+					AND o.date=CURRENT_DATE
+				GROUP BY
+				o.orderId;
+    		`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+//get order sorted with accepted details
+router.get('/getManufactureOrderDetailsInSortedByTypeWithAccepted', async (req, res) => {
+	const user_id = req.query.user_id;
+    const order_type = req.query.order_type;
+	try {
+		const result = await sequelize.query(
+			`
+				SELECT
+					o.orderId, o.date, o.time, o.orderState,o.orderType, 
+					CONCAT(u.firstName, " ", u.lastName) AS name,o.amount,o.totalQuantity
+				FROM
+					orders o
+				INNER JOIN
+					raw_place_orders p ON p.orderId = o.orderId
+				INNER JOIN
+					users u ON u.userId = p.userId
+				WHERE
+					p.productManufactureId = :productManufactureId
+					AND o.orderState = 1
+                    AND o.orderType=:order_type
+					AND o.date=CURRENT_DATE
+				GROUP BY
+				o.orderId;
+    		`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					productManufactureId: user_id,
+					order_type:order_type
+				},
+			}
+		);
+		res.json(result);
+		console.log(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
+//
+
+//update the order state
+router.post('/updateOrderState', async (req, res) => {
+    try {
+		const order_id = req.body.order_id;
+		const order_state = req.body.order_state;
+		await orders
+			.update(
+				{
+					orderState: order_state,
+				},
+				{
+					where: {
+						orderId: order_id,
+					},
+				}
+			)
+			.then((result) => {
+				console.log('Update result:', result);
+				res.send({type:"success", message:"Order state update Successfully"});
+			});
+	} catch (err) {
+		console.log('Error:', err);
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+
+//
 
 module.exports = router;
