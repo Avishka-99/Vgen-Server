@@ -132,7 +132,7 @@ router.get('/manufactureOrderDetails', async(req,res)=>{
 		INNER JOIN product_manufactures pm ON pm.productManufactureId=p.productManufactureId 
 		INNER JOIN users u ON u.userId=p.userId 
 		INNER JOIN payments pay ON pay.orderId=o.orderId 
-		WHERE pm.productManufactureId=:restaurantManagerId AND pay.userId=:restaurantManagerId
+		WHERE pm.productManufactureId=:restaurantManagerId AND pay.userId=:restaurantManagerId AND o.orderState>-1
 
 		GROUP BY p.orderId
      
@@ -163,7 +163,7 @@ router.get('/manufactureOrderCountsDetails', async(req,res)=>{
 			SELECT o.orderId, o.amount, o.date
 			FROM orders o
 			INNER JOIN raw_place_orders p ON p.orderId = o.orderId
-			WHERE p.productManufactureId = :restaurantManagerId
+			WHERE p.productManufactureId = :restaurantManagerId AND o.orderState>-1
 			GROUP BY p.orderId
 		) t
 		WHERE t.date = CURRENT_DATE();
@@ -202,6 +202,7 @@ router.get('/getManufactureMostOrderCountWithLimit', async (req, res) => {
       WHERE
       p.productManufactureId = :productManufactureId
 	  AND o.date=CURRENT_DATE
+	  AND o.orderState>-1
       GROUP BY p.productId 
       ORDER by count DESC 
       LIMIT 1
@@ -236,6 +237,7 @@ router.get('/getManufactureMostOrderCountWithOutLimit', async (req, res) => {
 			INNER JOIN products pr ON pr.productId=p.productId 
 			WHERE
 			p.productManufactureId = :productManufactureId
+			AND o.orderState>-1
 			AND o.date=CURRENT_DATE
 			GROUP BY p.productId 
 			ORDER by count DESC 

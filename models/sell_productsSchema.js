@@ -28,6 +28,10 @@ const sellProduct = sequelize.define('sell_product', {
         type: DataTypes.FLOAT,
         allowNull: true
  },
+ priceBase:{
+    type: DataTypes.STRING,
+    allowNull: true
+},
 },     
 {
     timestamps: false,
