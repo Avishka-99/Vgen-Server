@@ -7,7 +7,9 @@ const product = require('../../models/productSchema');
 const sell_product=require('../../models/sell_productsSchema')
 const orders = require('../../models/ordersSchema');
 const raw_placeOrders = require('../../models/raw_place_orderSchema');
+const refunds=require('../../models/refundsSchema.')
 const sequelize = require('../../models/db');
+const { time } = require('console');
 // product store
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -22,7 +24,7 @@ router.post('/rowProductStore', upload.single('productImage'), async (req, res) 
 	const transaction = await sequelize.transaction();
     const product_category="raw_food";
 	try {
-		const {quantity, description, productName, price,category,user_id} = req.body;
+		const {quantity, description, productName, price,category,user_id,priceBase} = req.body;
 		const {filename} = req.file;
        
 		const createdProduct = await product.create({
@@ -31,6 +33,7 @@ router.post('/rowProductStore', upload.single('productImage'), async (req, res) 
 			productImage: filename,
             product_category,
             row_category:category,
+			deleteState:1,
 		},{transaction});
 
         const lastInsertedProductId = createdProduct.productId;
@@ -40,6 +43,8 @@ router.post('/rowProductStore', upload.single('productImage'), async (req, res) 
 			manufactureId:user_id,
 			price,
             quantity,
+			priceBase,
+		    potionType:0
         },{transaction});
 
         await transaction.commit();
@@ -73,6 +78,7 @@ router.get('/allRowProduct', async (req, res) => {
 			},
 			where: {
 				manufactureId: user_id,
+				'$products.deleteState$':1
 			},
 		});
 		res.json(productData);
@@ -132,7 +138,7 @@ router.get('/manufactureOrderDetails', async(req,res)=>{
 		INNER JOIN product_manufactures pm ON pm.productManufactureId=p.productManufactureId 
 		INNER JOIN users u ON u.userId=p.userId 
 		INNER JOIN payments pay ON pay.orderId=o.orderId 
-		WHERE pm.productManufactureId=:restaurantManagerId AND pay.userId=:restaurantManagerId AND o.orderState>-1
+		WHERE pm.productManufactureId=:restaurantManagerId AND pay.userId=:restaurantManagerId AND o.orderState>-1 AND o.date = CURRENT_DATE()
 
 		GROUP BY p.orderId
      
@@ -556,6 +562,7 @@ router.post('/updateOrderState', async (req, res) => {
 			.update(
 				{
 					orderState: order_state,
+					deliveryState: 0
 				},
 				{
 					where: {
@@ -565,7 +572,85 @@ router.post('/updateOrderState', async (req, res) => {
 			)
 			.then((result) => {
 				console.log('Update result:', result);
-				res.send({type:"success", message:"Order state update Successfully"});
+				res.send({type:"success", message:"Order Finalized Successfully"});
+			});
+	} catch (err) {
+		console.log('Error:', err);
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+
+//
+
+//update the order reject state
+router.post('/updateOrderRejectState', async (req, res) => {
+	const transaction = await sequelize.transaction();
+	const order_id = req.body.order_id;
+	const order_state = req.body.order_state;
+    const currentDate = new Date();
+	const formattedDate = currentDate.toISOString().slice(0, 10);
+    const formattedTime = currentDate.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
+    try {
+		
+        await orders.update(
+			{
+				orderState: order_state,
+			},
+			{
+				where: {
+					orderId: order_id,
+				},
+			},
+			{transaction}
+		);
+        
+		await refunds.create(
+			{ 
+				date:formattedDate,
+				time:formattedTime,
+				orderId:order_id,
+				status:0,
+			},
+			{transaction}
+        );
+
+		await transaction.commit();
+		res.send({type:"success", message:"Order reject Successfully"});
+			
+	} catch (err) {
+		console.log('Error:', err);
+		await transaction.rollback();
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+
+//
+
+
+//delete product
+router.post('/deleteProduct', async (req, res) => {
+    try {
+		const id = req.body.id;
+		
+		await product
+			.update(
+				{
+					deleteState:0
+				},
+				{
+					where: {
+						productId: id,
+					},
+				}
+			)
+			.then((result) => {
+				console.log('Update result:', result);
+				res.send({type:"success", message:"product delete Successfully"});
 			});
 	} catch (err) {
 		console.log('Error:', err);

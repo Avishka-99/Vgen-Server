@@ -4,7 +4,7 @@ const sequelize = require('./db');
 
 // Define the User model
 const refunds = sequelize.define('refunds', {
-Id:{
+id:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -15,7 +15,10 @@ Id:{
 },time:{
         type: DataTypes.TIME,
         allowNull: true
-},state:{
+},orderId:{
+    type: DataTypes.INTEGER,
+    allowNull: false,
+},status:{
         type: DataTypes.TINYINT,
         allowNull: true
 }
