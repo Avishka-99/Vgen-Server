@@ -655,22 +655,18 @@ const complain_ing = multer({complain_ing_storage: complain_ing_storage});
 router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 	const transaction = await sequelize.transaction();
 	const currentDate = new Date();
-
-	// Formatting date as "Day-Month-Year"
-	const day = String(currentDate.getDate()).padStart(2, '0');
-	const month = String(currentDate.getMonth() + 1).padStart(2, '0');
-	const year = currentDate.getFullYear();
-	const formattedDate = `${day}-${month}-${year}`;
-
-	// Formatting time as "Hour:Minute:Second"
-	const hours = String(currentDate.getHours()).padStart(2, '0');
-	const minutes = String(currentDate.getMinutes()).padStart(2, '0');
-	const seconds = String(currentDate.getSeconds()).padStart(2, '0');
-	const formattedTime = `${hours}:${minutes}:${seconds}`;
+	const formattedDate = currentDate.toISOString().slice(0, 10);
+    const formattedTime = currentDate.toLocaleTimeString('en-US', {
+        hour12: false,
+        hour: '2-digit',
+        minute: '2-digit',
+        second: '2-digit',
+    });
 
 	try {
 		const {orderId, description, user_id} = req.body;
-		const {filename} = req.file;
+		// const {filename} = req.file;
+		const filename = req.file ? req.file.filename : null;
 
 		const createdComplain = await complain.create(
 			{
@@ -704,7 +700,7 @@ router.post('/addComplain', complain_ing.single('photo'), async (req, res) => {
 			{transaction}
 		);
 
-		await transaction.commit();
+		// await transaction.commit();
 		await place_complain.create({
 			complainId:lastInsertedComplainId,
 			orderId:orderId,
@@ -873,6 +869,35 @@ router.get('/getAcceptOrders', async (req, res) => {
 		console.log(err);
 	}
 });
+//
+
+//update the order state
+router.post('/updateOrderStateToFinal', async (req, res) => {
+    try {
+		const order_id = req.body.order_id;
+		const order_state = req.body.order_state;
+		await orders
+			.update(
+				{
+					orderState: order_state,
+					
+				},
+				{
+					where: {
+						orderId: order_id,
+					},
+				}
+			)
+			.then((result) => {
+				console.log('Update result:', result);
+				res.send({type:"success", message:"Order state update Successfully"});
+			});
+	} catch (err) {
+		console.log('Error:', err);
+		res.send({type:"error",message:"error Occurred"});
+	}
+});
+
 //
 
 module.exports = router;

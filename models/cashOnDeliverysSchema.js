@@ -15,7 +15,10 @@ Id:{
 },time:{
         type: DataTypes.TIME,
         allowNull: true
-},state:{
+},orderId:{
+    type: DataTypes.INTEGER,
+    allowNull: false,
+},status:{
         type: DataTypes.TINYINT,
         allowNull: true
 }
