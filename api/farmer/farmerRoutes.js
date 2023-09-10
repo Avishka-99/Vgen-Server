@@ -169,7 +169,9 @@ router.get('/manufactureOrderCountsDetails', async(req,res)=>{
 			SELECT o.orderId, o.amount, o.date
 			FROM orders o
 			INNER JOIN raw_place_orders p ON p.orderId = o.orderId
-			WHERE p.productManufactureId = :restaurantManagerId AND o.orderState>-1
+			WHERE p.productManufactureId = :restaurantManagerId 
+			AND o.orderState>-1
+			AND o.date=CURRENT_DATE
 			GROUP BY p.orderId
 		) t
 		WHERE t.date = CURRENT_DATE();
@@ -279,6 +281,7 @@ router.get('/getManufactureMostOrderTypeCountToday', async (req, res) => {
 				INNER JOIN raw_place_orders p ON p.orderId = o.orderId
 				WHERE p.productManufactureId = :productManufactureId
 				AND o.date = CURRENT_DATE()
+				AND o.orderState>-1
 				GROUP BY p.orderId
 			) t
 			GROUP BY t.orderType
