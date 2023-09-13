@@ -4,6 +4,7 @@ const router = express.Router();
 const app = express();
 
 const jwt = require('jsonwebtoken');
+const Recipe =require('../../models/recipeSchema');
 const User = require('../../models/userSchema');
 const product = require('../../models/productSchema');
 const restaurant = require('../../models/restaurant_managerSchema');
@@ -34,6 +35,20 @@ router.post('/fetchrestaurants', (req, res) => {
 	});
 	// console.log(restaurants)
 	// res.send(restaurants)
+});
+router.post('recipeupload', async (req, res) => {
+	try {
+		const {description, quantity, price, productName} = req.body;
+		const {filename} = req.file;
+		const productData = await Recipe.create({
+			productName,
+			description,
+			productImage: filename,
+		});
+	
+	} catch (err) {
+		console.log(err);
+	}
 });
 router.post('/fetchrestaurantproducts', (req, res) => {
 	const restaurantID = req.body.restaurantId;
