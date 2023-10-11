@@ -19,6 +19,7 @@ const sell_product = require('../models/sell_productsSchema');
 const vegan_user = require('../models/vegan_userSchema');
 const feed = require('../models/feedsSchema');
 const delivery_person = require('../models/delivery_personSchema');
+const payments=require('../models/paymentsSchema');
 const {or} = require('sequelize');
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
@@ -256,43 +257,53 @@ order.belongsTo(place_order, {foreignKey: 'orderId'});
 
 router.post('/orderPost', async (req, res) => {
 	try {
-		const {userId,productId,quantity,amount,date,time,status,orderType } = req.body;
+		const {userId,productId,quantity,paymentType,amount,date,time,status,orderType,price } = req.body;
 
 		// Create a record in the order table
 		const orderData = await order.create({
-			totalQuantity:quantity,
+			totalQuantity: quantity.length >= 2 ? (+quantity[0] + +quantity[1]) : 0,
 			orderType:orderType,
-			amount: amount, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
+			amount: amount,
+			paymentType:paymentType, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
 			date: date,
 			time: time,
 			orderState: status,
 
 			// other fields...
 		});
+		const placeOrderData=[];
+		for(let i=0;i<productId.length;i++){
 		const decrementQuantity = await sell_product.decrement('quantity', {
-			by: quantity,
+			by: quantity[i],
 			where: {
-				productId: productId,
+				productId: productId[i],
 			},
 		});
         const restaurantobjId = await sell_product.findOne({
 			attributes: ['manufactureId'],
 			where: {
-				productId: productId,
+				productId: productId[i],
 			},
 		});
       const  restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
 		// Create a record in the place_order table
-		const placeOrderData = await place_order.create({
+		const placeOrderItem = await place_order.create({
 			userId,
-			productId: productId,
+			productId: productId[i],
 			resturantManagerId:restaurantId, // Use the 'productId' from the 'product' table
-			quantity:quantity,
-			price:amount,
+			quantity:quantity[i],
+			price:price[i],
             orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
 		});
+		placeOrderData.push(placeOrderItem,decrementQuantity);
+		}
+		const paymentData=await payments.create({
+			orderId:orderData.orderId,
+			status:0,
+			userId:userId,
+		});
 
-		res.json({  orderData,placeOrderData,decrementQuantity });
+		res.json({  orderData,placeOrderData,paymentData });
 		console.log(placeOrderData);
 		console.log(orderData);
 	} catch (err) {

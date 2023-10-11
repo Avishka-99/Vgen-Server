@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 const app = express();
-
+const multer = require('multer');
 const jwt = require('jsonwebtoken');
 const Recipe =require('../../models/recipeSchema');
 const User = require('../../models/userSchema');
@@ -36,15 +36,42 @@ router.post('/fetchrestaurants', (req, res) => {
 	// console.log(restaurants)
 	// res.send(restaurants)
 });
-router.post('recipeupload', async (req, res) => {
+const storage = multer.diskStorage({
+	destination: function (req, file, cb) {
+		cb(null, './uploads/recipes');
+	},
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
+});
+const upload = multer({storage: storage});
+//recipe upload
+router.post('/recipeupload',upload.single('image'), async (req, res) => {
 	try {
-		const {description, quantity, price, productName} = req.body;
+		const {userId,recipeName,cuisine,category,veganCategory,isVegan,ingredients,
+			instructions,servingSize,preparationTime} = req.body;
 		const {filename} = req.file;
+		let isVegan2;
+	     if(isVegan===true){
+			 isVegan2='yes';
+		 }else{
+			 isVegan2='no';
+		 }
 		const productData = await Recipe.create({
-			productName,
-			description,
-			productImage: filename,
+            userId,
+			recipeName,
+			cuisineType:cuisine,
+			categoryType:category,
+			veganCategory,
+			checkVegan:isVegan2,
+			ingredients,
+			instructions,
+			servingSize,
+			preparationTime,
+			recipeImage:filename
+
 		});
+		res.send(productData);
 	
 	} catch (err) {
 		console.log(err);
