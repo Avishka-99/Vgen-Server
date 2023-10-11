@@ -12,8 +12,8 @@ router.post('/fetchstaff', async (req, res) => {
 			userRole: 'Staff',
 			// userId: restaurant.resturantManagerId,
 		},
-	}).then((result)=>{
-        res.send(result)
-    });
+	}).then((result) => {
+		res.send(result);
+	});
 });
 module.exports = router;

@@ -4,13 +4,15 @@ const router = express.Router();
 const app = express();
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
-const Recipe =require('../../models/recipeSchema');
+const Recipe = require('../../models/recipeSchema');
 const User = require('../../models/userSchema');
 const product = require('../../models/productSchema');
 const restaurant = require('../../models/restaurant_managerSchema');
 const sellProducts = require('../../models/sell_productsSchema');
 const orders = require('../../models/ordersSchema');
 const place_order = require('../../models/place_orderSchema');
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
 		foreignKey: 'resturantManagerId',
@@ -175,5 +177,47 @@ router.post('/fetchproduct', async (req, res) => {
 			console.log(result);
 			res.send(result);
 		});
+});
+router.post('/fetchresult', async (req, res) => {
+	const parameter = req.body.parameter;
+	product
+		.findAll({
+			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'cooking_time', 'ingredient'],
+			include: {
+				model: sellProducts,
+				attributes: ['manufactureId', 'price', 'quantity'],
+				required: true,
+			},
+			where: {
+				productName: {[Op.like]: `%${parameter}%`},
+			},
+		})
+		.then((result) => {
+			//console.log(result);
+			res.send(result);
+		});
+	// product.hasMany(sellProducts, {
+	// 	foreignKey: 'productId',
+	// });
+	// sellProducts.belongsTo(product, {
+	// 	foreignKey: 'productId',
+	// });
+	// product
+	// 	.findAll({
+	// 		attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'cooking_time', 'ingredient'],
+	// 		include: {
+	// 			model: sellProducts,
+	// 			attributes: ['manufactureId', 'price', 'quantity'],
+	// 			where: {
+	// 				productId: productId,
+	// 				manufactureId: id,
+	// 			},
+	// 			required: true,
+	// 		},
+	// 	})
+	// 	.then((result) => {
+	// 		console.log(result);
+	// 		res.send(result);
+	// 	});
 });
 module.exports = router;
