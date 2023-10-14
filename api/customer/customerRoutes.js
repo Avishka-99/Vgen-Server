@@ -12,6 +12,7 @@ const sellProducts = require('../../models/sell_productsSchema');
 const orders = require('../../models/ordersSchema');
 const place_order = require('../../models/place_orderSchema');
 const Sequelize = require('sequelize');
+const veganUser=require('../../models/vegan_userSchema');
 const Op = Sequelize.Op;
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
@@ -178,6 +179,33 @@ router.post('/fetchproduct', async (req, res) => {
 			res.send(result);
 		});
 });
+router.post('/UpdateLocation', async (req, res) => {
+	const latitude = req.body.latitude;
+	const longitude = req.body.longitude;
+	const userId = req.body.userId;
+
+	veganUser.update(
+		{latitude: latitude, longitude: longitude},
+		{
+			where: {userId: userId},
+		}
+	).then((result) => {
+		res.send('success');
+	});
+});
+router.get('/getlocation', async (req, res) => {
+	const userId = req.query.userId;
+		try {
+			const resData = await veganUser.findOne(
+			{
+				where : {userId: userId}
+			}
+			);
+			res.json(resData);
+		} catch (err) {
+			console.log(err);
+		}
+});
 router.post('/fetchresult', async (req, res) => {
 	const parameter = req.body.parameter;
 	product
@@ -196,6 +224,7 @@ router.post('/fetchresult', async (req, res) => {
 			//console.log(result);
 			res.send(result);
 		});
+
 	// product.hasMany(sellProducts, {
 	// 	foreignKey: 'productId',
 	// });
