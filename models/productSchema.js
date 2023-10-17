@@ -44,6 +44,9 @@ row_category:{
 },ingredient:{
        type: DataTypes.STRING,
        allowNull: true
+},deleteState:{
+       type: DataTypes.TINYINT,
+       allowNull: false
 },
 },     
 {

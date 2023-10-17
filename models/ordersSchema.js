@@ -22,7 +22,10 @@ const orders = sequelize.define('order', {
  },amount:{
         type: DataTypes.INTEGER,
         allowNull: true
- },description:{
+ },paymentType:{
+       type: DataTypes.STRING,
+       allowNull: true
+},description:{
         type: DataTypes.STRING,
         allowNull: true
  },orderType:{
