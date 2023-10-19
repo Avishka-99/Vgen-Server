@@ -1,10 +1,10 @@
-
 const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
 
+
 // Define the User model
 const restaurantManager = sequelize.define('restaurant_manager', {
- resturantManagerId:{
+       resturantManagerId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -38,7 +38,15 @@ const restaurantManager = sequelize.define('restaurant_manager', {
         //time
         type:DataTypes.TIME,
         allowNull: true,
- },
+ },image:{
+
+       type:DataTypes.STRING,
+       allowNull:true,
+ },services:{
+       type:DataTypes.INTEGER,
+       allowNull:false,
+ }
+
 }, {
     timestamps: false,
 });

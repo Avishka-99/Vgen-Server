@@ -3,14 +3,14 @@ const sequelize = require('./db');
 
 
 // Define the User model
-const orders = sequelize.define('orders', {
+const orders = sequelize.define('order', {
  orderId:{
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
-        foriegnKey:true,
-        autoIncrement:true,
- },quantity:{
+              foriegnKey:true,   
+            autoIncrement: true
+ },totalQuantity:{
         type: DataTypes.INTEGER,
         allowNull: true
  },date:{
@@ -22,7 +22,10 @@ const orders = sequelize.define('orders', {
  },amount:{
         type: DataTypes.INTEGER,
         allowNull: true
- },description:{
+ },paymentType:{
+       type: DataTypes.STRING,
+       allowNull: true
+},description:{
         type: DataTypes.STRING,
         allowNull: true
  },orderType:{
@@ -38,7 +41,16 @@ const orders = sequelize.define('orders', {
 },deliveryFee:{
        type: DataTypes.FLOAT,
        allowNull: true
-}
+},deliveryDate:{
+       type: DataTypes.DATE,
+       allowNull: true
+},DeliveryTime:{
+       type: DataTypes.TIME,
+       allowNull: true
+},deliveryState:{
+       type: DataTypes.TINYINT,
+       allowNull: true
+},
 },
  {
     timestamps: false,

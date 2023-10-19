@@ -8,11 +8,18 @@ const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const product = require('../models/productSchema');
 const restaurant = require('../models/restaurant_managerSchema');
-
+const bodyParser = require('body-parser');
 const bcrypt = require('bcrypt');
 const multer = require('multer');
 const {sendMail} = require('../include/NodemailerConfig');
 const {generateOtp} = require('../include/OtpGen');
+
+const vegan_user = require('../models/vegan_userSchema');
+
+const delivery_person = require('../models/delivery_personSchema');
+
+
+app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
 	const email = req.body.email;
 	const password = req.body.password;
@@ -24,11 +31,11 @@ router.post('/signinuser', (req, res) => {
 	})
 		.then((result) => {
 			console.log(result);
-			if (!result) {
+			if (result.length == 0) {
 				res.send('Please check email');
 			}
 			{
-				bcrypt.compare(password, result[0].password, (err, result_2) => {
+				bcrypt.compare(password, result[0].password, async (err, result_2) => {
 					if (result_2) {
 						if (result[0].status != 'verified') {
 							const otp = generateOtp(6);
@@ -43,15 +50,29 @@ router.post('/signinuser', (req, res) => {
 							var mailStatus = sendMail(otp, email);
 							res.send('Not verified');
 						} else {
+							var lang = 0;
+							var long = 0;
 							const type = result[0].userRole;
+							const userID = result[0].userId;
 							const payload = {
 								userId: result[0].userId,
 								password: result[0].password,
 								time: new Date(),
 							};
+							if (type == 'Customer') {
+								await vegan_user.findAll({
+									raw: true,
+									where: {
+										userId: userID,
+									},
+								}).then((result)=>{
+									lang=result[0].latitude,
+									long=result[0].longitude
+								});
+							}
 							const secretKey = 'Avishka';
 							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token};
+							const response = {type, token, userID,lang,long};
 							res.send(response);
 						}
 					} else {
@@ -72,20 +93,22 @@ router.post('/registeruser', (req, res) => {
 	const nic = req.body.age;
 	const userRole = req.body.userRole;
 	const contactNo = req.body.contactNo;
+	const latitude = req.body.latitude;
+	const longitude = req.body.longitude;
 	//res.send(userRole)
 	// const profilePicture=req.body.profilePicture;
 	bcrypt.hash(password, 10, (err, hash) => {
 		if (err) {
-			res.send('unsuccessful');
+			res.send({type: 'error', message: 'An error occured. Try again later'});
 		} else {
 			User.findAll({
 				where: {
 					email: email,
 				},
-			}).then((result) => {
-				console.log(result.length);
+			}).then(async (result) => {
+				//console.log(result.length);
 				if (result.length == 0) {
-					User.create({
+					await User.create({
 						email: email,
 						password: hash,
 						firstName: firstName,
@@ -95,7 +118,7 @@ router.post('/registeruser', (req, res) => {
 						contactNo: contactNo,
 					});
 					const otp = generateOtp(6);
-					User.update(
+					await User.update(
 						{status: otp},
 						{
 							where: {
@@ -103,8 +126,32 @@ router.post('/registeruser', (req, res) => {
 							},
 						}
 					);
+					await User.findAll({
+						raw: true,
+						where: {
+							email: email,
+						},
+					}).then(async (result) => {
+						const userId = result[0].userId;
+						const role = result[0].userRole;
+						console.log(role);
+						if (role == 'Customer') {
+							await vegan_user.create({
+								userId: userId,
+								veganCategory: 'vegan',
+								latitude: latitude,
+								longitude: longitude,
+							});
+						} else if (role == 'Delivery') {
+							await delivery_person.create({
+								deliveryPersonId: userId,
+								latitude: latitude,
+								longitude: longitude,
+							});
+						}
+					});
 					var mailStatus = sendMail(otp, email);
-					console.log(mailStatus);
+					//console.log(mailStatus);
 					res.send({type: 'success', message: 'Account created successfully'});
 					//res.send(mailStatus);
 				} else {
@@ -114,81 +161,6 @@ router.post('/registeruser', (req, res) => {
 		}
 	});
 });
-// product store
-const storage = multer.diskStorage({
-	destination: function (req, file, cb) {
-		cb(null, './uploads/products');
-	},
-	filename: function (req, file, cb) {
-		cb(null, Date.now() + path.extname(file.originalname));
-	},
-});
-const upload = multer({storage: storage});
-router.post('/productStore', upload.single('productImage'), async (req, res) => {
-	console.log(req.file);
-	try {
-		const {quantity, description, productName, price} = req.body;
-		const {filename} = req.file;
 
-		await product.create({
-			quantity,
-			description,
-			productName,
-			price,
-			productImage: filename,
-		});
-	} catch (err) {
-		console.log(err);
-	}
-});
-
-router.get('/productGet', async (req, res) => {
-	try {
-		const productData = await product.findAll();
-		res.json(productData);
-	} catch (err) {
-		console.log(err);
-	}
-});
-router.get('/restaurantGet', async (req, res) => {
-	try {
-		const resData = await restaurant.findAll();
-		res.json(resData);
-	} catch (err) {
-		console.log(err);
-	}
-});
-router.post('/verifyuser', async (req, res) => {
-	try {
-		User.findAll({
-			attributes: ['status'],
-			where: {
-				email: req.body.email,
-			},
-		}).then((result) => {
-			if (result.length > 0) {
-				//res.send(result[0].status);
-				//res.send(result.toJSON());
-				const otp = result[0].status;
-				if (otp == req.body.otp) {
-					User.update(
-						{status: 'verified'},
-						{
-							where: {
-								email: req.body.email,
-							},
-						}
-					);
-					res.send('OTP matched');
-				} else {
-					res.send('Invalid OTP');
-				}
-			}
-		});
-		//res.json(resData);
-	} catch (err) {
-		console.log(err);
-	}
-});
 
 module.exports = router;
