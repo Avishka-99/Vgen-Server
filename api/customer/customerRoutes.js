@@ -20,6 +20,7 @@ const place_order = require('../../models/place_orderSchema');
 const Sequelize = require('sequelize');
 const veganUser=require('../../models/vegan_userSchema');
 const {or} = require('sequelize');
+const categories = require('../../models/categorySchema')
 
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
@@ -231,30 +232,6 @@ router.post('/fetchresult', async (req, res) => {
 			//console.log(result);
 			res.send(result);
 		});
-
-	// product.hasMany(sellProducts, {
-	// 	foreignKey: 'productId',
-	// });
-	// sellProducts.belongsTo(product, {
-	// 	foreignKey: 'productId',
-	// });
-	// product
-	// 	.findAll({
-	// 		attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'cooking_time', 'ingredient'],
-	// 		include: {
-	// 			model: sellProducts,
-	// 			attributes: ['manufactureId', 'price', 'quantity'],
-	// 			where: {
-	// 				productId: productId,
-	// 				manufactureId: id,
-	// 			},
-	// 			required: true,
-	// 		},
-	// 	})
-	// 	.then((result) => {
-	// 		console.log(result);
-	// 		res.send(result);
-	// 	});
 });
 const storage1 = multer.diskStorage({
 	destination: function (req, file, cb) {
@@ -551,6 +528,13 @@ router.get('/getProfile/:id', async (req, res) => {
 		console.log(err);
 	}
 });
-
+router.post('/fetchcategories', async (req, res) => {
+	try {
+		const result = await categories.findAll();
+		res.send(result);
+	} catch (err) {
+		console.log(err);
+	}
+});
 
 module.exports = router;
