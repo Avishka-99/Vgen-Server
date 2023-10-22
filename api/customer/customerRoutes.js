@@ -9,7 +9,7 @@ const feed = require('../../models/feedsSchema');
 const order = require('../../models/ordersSchema');
 
 const sell_product = require('../../models/sell_productsSchema');
-const payments=require('../../models/paymentsSchema');
+const payments = require('../../models/paymentsSchema');
 const User = require('../../models/userSchema');
 const product = require('../../models/productSchema');
 const restaurant = require('../../models/restaurant_managerSchema');
@@ -18,9 +18,9 @@ const orders = require('../../models/ordersSchema');
 const communityEventOrganizer = require('../../models/community_event_organizerSchema');
 const place_order = require('../../models/place_orderSchema');
 const Sequelize = require('sequelize');
-const veganUser=require('../../models/vegan_userSchema');
+const veganUser = require('../../models/vegan_userSchema');
 const {or} = require('sequelize');
-const categories = require('../../models/categorySchema')
+const categories = require('../../models/categorySchema');
 
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
@@ -57,33 +57,30 @@ const storage = multer.diskStorage({
 });
 const upload = multer({storage: storage});
 //recipe upload
-router.post('/recipeupload',upload.single('image'), async (req, res) => {
+router.post('/recipeupload', upload.single('image'), async (req, res) => {
 	try {
-		const {userId,recipeName,cuisine,category,veganCategory,isVegan,ingredients,
-			instructions,servingSize,preparationTime} = req.body;
+		const {userId, recipeName, cuisine, category, veganCategory, isVegan, ingredients, instructions, servingSize, preparationTime} = req.body;
 		const {filename} = req.file;
 		let isVegan2;
-	     if(isVegan===true){
-			 isVegan2='yes';
-		 }else{
-			 isVegan2='no';
-		 }
+		if (isVegan === true) {
+			isVegan2 = 'yes';
+		} else {
+			isVegan2 = 'no';
+		}
 		const productData = await Recipe.create({
-            userId,
+			userId,
 			recipeName,
-			cuisineType:cuisine,
-			categoryType:category,
+			cuisineType: cuisine,
+			categoryType: category,
 			veganCategory,
-			checkVegan:isVegan2,
+			checkVegan: isVegan2,
 			ingredients,
 			instructions,
 			servingSize,
 			preparationTime,
-			recipeImage:filename
-
+			recipeImage: filename,
 		});
 		res.send(productData);
-	
 	} catch (err) {
 		console.log(err);
 	}
@@ -192,27 +189,27 @@ router.post('/UpdateLocation', async (req, res) => {
 	const longitude = req.body.longitude;
 	const userId = req.body.userId;
 
-	veganUser.update(
-		{latitude: latitude, longitude: longitude},
-		{
-			where: {userId: userId},
-		}
-	).then((result) => {
-		res.send('success');
-	});
+	veganUser
+		.update(
+			{latitude: latitude, longitude: longitude},
+			{
+				where: {userId: userId},
+			}
+		)
+		.then((result) => {
+			res.send('success');
+		});
 });
 router.get('/getlocation', async (req, res) => {
 	const userId = req.query.userId;
-		try {
-			const resData = await veganUser.findOne(
-			{
-				where : {userId: userId}
-			}
-			);
-			res.json(resData);
-		} catch (err) {
-			console.log(err);
-		}
+	try {
+		const resData = await veganUser.findOne({
+			where: {userId: userId},
+		});
+		res.json(resData);
+	} catch (err) {
+		console.log(err);
+	}
 });
 router.post('/fetchresult', async (req, res) => {
 	const parameter = req.body.parameter;
@@ -242,45 +239,44 @@ const storage1 = multer.diskStorage({
 	},
 });
 const upload1 = multer({storage: storage1});
-router.post('/registerCommunityOrganizer',upload1.single('profilePicture'), async (req, res) => {
+router.post('/registerCommunityOrganizer', upload1.single('profilePicture'), async (req, res) => {
 	try {
-		const {userId,organizeName,regNo,description,nic,profilePicture} = req.body;
+		const {userId, organizeName, regNo, description, nic, profilePicture} = req.body;
 		const {filename} = req.file;
 		const productData = await communityEventOrganizer.create({
-			eventOrganizerId:userId,
+			eventOrganizerId: userId,
 			organizeName,
 			regNo,
 			description,
 			nic,
-			verifyState:0,
-			profilePicture:filename
+			verifyState: 0,
+			profilePicture: filename,
 		});
 		res.send(productData);
 	} catch (err) {
 		console.log(err);
 	}
-
 });
 //search foods, restaurants, events
 
-const { Op } = require('sequelize');
+const {Op} = require('sequelize');
 
 router.get('/search', async (req, res) => {
-  const search = req.query.search;
-  console.log(search);
-  try {
-    const resData = await product.findAll({
-      where: {
-        productName: {
-          [Op.like]: `%${search}%` // Use the like operator to perform a partial match
-        }
-      }
-    });
-    res.json(resData);
-  } catch (err) {
-    console.log(err);
-    res.status(500).json({ error: 'Internal Server Error' });
-  }
+	const search = req.query.search;
+	console.log(search);
+	try {
+		const resData = await product.findAll({
+			where: {
+				productName: {
+					[Op.like]: `%${search}%`, // Use the like operator to perform a partial match
+				},
+			},
+		});
+		res.json(resData);
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'Internal Server Error'});
+	}
 });
 
 //new customer codes
@@ -378,53 +374,53 @@ order.belongsTo(place_order, {foreignKey: 'orderId'});
 
 router.post('/orderPost', async (req, res) => {
 	try {
-		const {userId,productId,quantity,paymentType,amount,date,time,status,orderType,price } = req.body;
+		const {userId, productId, quantity, paymentType, amount, date, time, status, orderType, price} = req.body;
 
 		// Create a record in the order table
 		const orderData = await order.create({
-			totalQuantity: quantity.length >= 2 ? (+quantity[0] + +quantity[1]) : 0,
-			orderType:orderType,
+			totalQuantity: quantity.length >= 2 ? +quantity[0] + +quantity[1] : 0,
+			orderType: orderType,
 			amount: amount,
-			paymentType:paymentType, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
+			paymentType: paymentType, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
 			date: date,
 			time: time,
 			orderState: status,
 
 			// other fields...
 		});
-		const placeOrderData=[];
-		for(let i=0;i<productId.length;i++){
-		const decrementQuantity = await sell_product.decrement('quantity', {
-			by: quantity[i],
-			where: {
+		const placeOrderData = [];
+		for (let i = 0; i < productId.length; i++) {
+			const decrementQuantity = await sell_product.decrement('quantity', {
+				by: quantity[i],
+				where: {
+					productId: productId[i],
+				},
+			});
+			const restaurantobjId = await sell_product.findOne({
+				attributes: ['manufactureId'],
+				where: {
+					productId: productId[i],
+				},
+			});
+			const restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
+			// Create a record in the place_order table
+			const placeOrderItem = await place_order.create({
+				userId,
 				productId: productId[i],
-			},
-		});
-        const restaurantobjId = await sell_product.findOne({
-			attributes: ['manufactureId'],
-			where: {
-				productId: productId[i],
-			},
-		});
-      const  restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
-		// Create a record in the place_order table
-		const placeOrderItem = await place_order.create({
-			userId,
-			productId: productId[i],
-			resturantManagerId:restaurantId, // Use the 'productId' from the 'product' table
-			quantity:quantity[i],
-			price:price[i],
-            orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
-		});
-		placeOrderData.push(placeOrderItem,decrementQuantity);
+				resturantManagerId: restaurantId, // Use the 'productId' from the 'product' table
+				quantity: quantity[i],
+				price: price[i],
+				orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
+			});
+			placeOrderData.push(placeOrderItem, decrementQuantity);
 		}
-		const paymentData=await payments.create({
-			orderId:orderData.orderId,
-			status:0,
-			userId:userId,
+		const paymentData = await payments.create({
+			orderId: orderData.orderId,
+			status: 0,
+			userId: userId,
 		});
 
-		res.json({  orderData,placeOrderData,paymentData });
+		res.json({orderData, placeOrderData, paymentData});
 		console.log(placeOrderData);
 		console.log(orderData);
 	} catch (err) {
@@ -536,5 +532,40 @@ router.post('/fetchcategories', async (req, res) => {
 		console.log(err);
 	}
 });
-
+router.post('/getallproducts', async (req, res) => {
+	console.log('helloo');
+	// User.findAll({
+	// 	attributes: ['userId', 'city'],
+	// 	include: {
+	// 		model: product,
+	// 		attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'vegan_category', 'cooking_time', 'ingredient'],
+	// 		include: {
+	// 			model: sellProducts,
+	// 			attributes: ['manufactureId', 'price', 'quantity', 'options'],
+	// 			required: true,
+	// 			include:{
+	// 				model:restaurant,
+	// 				attributes:['resturantName','resturantType'],
+	// 				required:true,
+	// 			}
+	// 		},
+	// 	},
+	// }).then((result) => {
+	// 		console.log(result);
+	// 		res.send(result);
+	// 	});
+	product
+		.findAll({
+			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'vegan_category', 'cooking_time', 'ingredient'],
+			include: {
+				model: sellProducts,
+				attributes: ['manufactureId', 'price', 'quantity', 'options'],
+				required: true,
+			},
+		})
+		.then((result) => {
+			console.log(result);
+			res.send(result);
+		});
+});
 module.exports = router;
