@@ -24,9 +24,9 @@ router.get("/deliverDetails",async (req, res) => {
 
 router.get("/deliveryOrders",async(req,res)=>{
     const userid=req.query.userid;
-    const latitude=req.query.lat
-    const longitude=req.query.lon;
-    console.log("my location",longitude)
+    let lat_deriver=req.query.lat
+    let lon_deriver=req.query.lon;
+    console.log("my location",lon_deriver)
     console.log("userrtttt",userid)
    try{
     const orderData=await sequelize.query(`SELECT
@@ -70,15 +70,15 @@ router.get("/deliveryOrders",async(req,res)=>{
          FROM delivery_persons WHERE delivery_persons.deliveryPersonId=${userid};`
     )
 
-    // const udatelocation=await sequelize.query(`UPDATE delivery_persons SET delivery_persons.latitude=${latitude} ,
-    // delivery_persons.longitude=${longitude} 
-    // WHERE delivery_persons.deliveryPersonId=${userid};`)
+    const udatelocation=await sequelize.query(`UPDATE delivery_persons SET delivery_persons.latitude=${lat_deriver} ,
+    delivery_persons.longitude=${lon_deriver} 
+    WHERE delivery_persons.deliveryPersonId=${userid};`)
 
     const result ={
         deliveryData:deliveryData,
         orderData:orderData
     };
-     // console.log(result.orderData)
+      //console.log(result.orderData)
      //const uniqdeliveryData=new Map() //remove dublicat array
      const uniqorderData=new Map()
      const frontEnd_pass_orders=[]
@@ -110,6 +110,7 @@ router.get("/deliveryOrders",async(req,res)=>{
             const openTimeShop=neworderData[i][j].openTime
             const orderDate=neworderData[i][j].date
             const aroundTime=AroundTime(timeClose)
+            console.log('vegen usre distance',VegenuserDistance)
            // console.log("dsfsdf",RestDistance)
             //console.log("mmmm",VegenuserDistance)
            // console.log(aroundTime)
@@ -195,15 +196,6 @@ router.get("/deliveryOrders",async(req,res)=>{
         );
       }
       
-      //
-      
-      
-      
-      
-      
-      
-     
-
      res.json(frontEnd_pass_orders)
     //res.json({ result });
     //console.log(result)
