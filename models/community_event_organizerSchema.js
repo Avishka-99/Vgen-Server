@@ -9,7 +9,11 @@ const communityEventOrganizer = sequelize.define('community_event_organizer', {
         allowNull: false,
         primaryKey: true,
         foriegnKey:true,
-    },regNo:{
+    },organizeName:{
+        type:DataTypes.STRING,
+        allowNull:true
+    }
+    ,regNo:{
         type: DataTypes.STRING,
         allowNull: true
     },description:{
@@ -21,9 +25,11 @@ const communityEventOrganizer = sequelize.define('community_event_organizer', {
     },verifyState:{
         type:DataTypes.TINYINT,
         allowNull:true
+    },profilePicture:{
+        type:DataTypes.STRING,
+        allowNull:true
     }
-    }
-    ,
+},
 
  {
     timestamps: false,
