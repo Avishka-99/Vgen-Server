@@ -6,7 +6,7 @@ const jwt = require('jsonwebtoken');
 const orders = require('../../models/ordersSchema');
 const sequelize = require('../../models/db');
 const {type} = require('os');
-
+router.use(express.json());
 router.get('/deliverDetails', async (req, res) => {
 	try {
 		const ordertData = await orders.findAll();

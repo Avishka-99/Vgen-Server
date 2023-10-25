@@ -4,7 +4,7 @@ const router = express.Router();
 const app = express();
 const KEYS = require('../keys/Keys')
 const stripe = require('stripe')(KEYS.STRIPE_KEY);
-
+router.use(express.json());
 router.post('/intents', async (req, res) => {
 	try {
 		const paymentIntent = await stripe.paymentIntents.create({
