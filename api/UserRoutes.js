@@ -17,7 +17,7 @@ const {generateOtp} = require('../include/OtpGen');
 const vegan_user = require('../models/vegan_userSchema');
 
 const delivery_person = require('../models/delivery_personSchema');
-
+router.use(express.json());
 
 app.use(bodyParser.json());
 router.post('/signinuser', (req, res) => {
@@ -60,19 +60,20 @@ router.post('/signinuser', (req, res) => {
 								time: new Date(),
 							};
 							if (type == 'Customer') {
-								await vegan_user.findAll({
-									raw: true,
-									where: {
-										userId: userID,
-									},
-								}).then((result)=>{
-									lang=result[0].latitude,
-									long=result[0].longitude
-								});
+								await vegan_user
+									.findAll({
+										raw: true,
+										where: {
+											userId: userID,
+										},
+									})
+									.then((result) => {
+										(lang = result[0].latitude), (long = result[0].longitude);
+									});
 							}
 							const secretKey = 'Avishka';
 							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token, userID,lang,long};
+							const response = {type, token, userID, lang, long};
 							res.send(response);
 						}
 					} else {
@@ -161,6 +162,5 @@ router.post('/registeruser', (req, res) => {
 		}
 	});
 });
-
 
 module.exports = router;

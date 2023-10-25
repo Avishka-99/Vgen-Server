@@ -2,7 +2,7 @@ const path = require('path');
 const express = require('express');
 const router = express.Router();
 const app = express();
-
+router.use(express.json());
 const jwt = require('jsonwebtoken');
 const User = require('../../models/userSchema');
 router.post('/fetchstaff', async (req, res) => {
