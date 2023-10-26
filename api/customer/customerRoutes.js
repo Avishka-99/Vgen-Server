@@ -589,19 +589,32 @@ router.post('/fetchRestaurant', async (req, res) => {
 			res.send(response);
 		});
 });
-const storage4 = multer.diskStorage({
-	destination: './uploads/community/',
-	filename: function (req, file, cb) {
-		cb(null, Date.now() + path.extname(file.originalname));
-	},
-});
-const upload4 = multer({storage: storage4});
-router.post('/registercommunity', async (req, res) => {
-	fs.writeFile('./out.png', req.body.data, 'base64', (err) => {
-		if (err) throw err;
-	});
-	//console.log(req.body.data);
-	res.send('success');
+router.post('/requestcommunityorganizer', async (req, res) => {
+	//console.log("called")
+	//res.send('success')
+	const user_id = req.body.user_id;
+	communityEventOrganizer
+		.findOne({
+			eventOrganizerId: user_id,
+			where: {
+				eventOrganizerId: user_id,
+			},
+		})
+		.then(async (result) => {
+			if (!result) {
+				await communityEventOrganizer
+					.create({
+						eventOrganizerId: user_id,
+						description: 'blaa blaa',
+						verifyState: 0,
+					})
+					.then(() => {
+						res.send('success');
+					});
+			} else {
+				res.send('unsuccess');
+			}
+		});
 });
 
 //get orders for user Id in place order and order
