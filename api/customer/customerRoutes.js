@@ -21,7 +21,7 @@ const Sequelize = require('sequelize');
 const veganUser = require('../../models/vegan_userSchema');
 const {or} = require('sequelize');
 const categories = require('../../models/categorySchema');
-
+app.use(express.json());
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
 		foreignKey: 'resturantManagerId',
@@ -241,16 +241,15 @@ const storage1 = multer.diskStorage({
 const upload1 = multer({storage: storage1});
 router.post('/registerCommunityOrganizer', upload1.single('profilePicture'), async (req, res) => {
 	try {
-		const {userId, organizeName, regNo, description, nic, profilePicture} = req.body;
+		const {userId, organizeName, description} = req.body;
 		const {filename} = req.file;
 		const productData = await communityEventOrganizer.create({
 			eventOrganizerId: userId,
 			organizeName,
-			regNo,
 			description,
-			nic,
 			verifyState: 0,
-			profilePicture: filename,
+			profilePicture: filename
+
 		});
 		res.send(productData);
 	} catch (err) {
@@ -369,65 +368,70 @@ router.post('/verifyuser', async (req, res) => {
 });
 
 // Define the association between place_order and order
-place_order.hasMany(order, {foreignKey: 'orderId'});
-order.belongsTo(place_order, {foreignKey: 'orderId'});
-
 router.post('/orderPost', async (req, res) => {
-	try {
-		const {userId, productId, quantity, paymentType, amount, date, time, status, orderType, price} = req.body;
+    try {
+        const { userId, products, paymentType, amount, orderType, status, date, time } = req.body;
 
-		// Create a record in the order table
-		const orderData = await order.create({
-			totalQuantity: quantity.length >= 2 ? +quantity[0] + +quantity[1] : 0,
-			orderType: orderType,
-			amount: amount,
-			paymentType: paymentType, // Use 'amount' instead of 'price' if that's the correct field name in your 'place_order' model
-			date: date,
-			time: time,
-			orderState: status,
+        if (!Array.isArray(products) || products.length === 0) {
+            res.status(400).json({ error: 'Invalid product data.' });
+            return;
+        }
 
-			// other fields...
-		});
-		const placeOrderData = [];
-		for (let i = 0; i < productId.length; i++) {
-			const decrementQuantity = await sell_product.decrement('quantity', {
-				by: quantity[i],
-				where: {
-					productId: productId[i],
-				},
-			});
-			const restaurantobjId = await sell_product.findOne({
-				attributes: ['manufactureId'],
-				where: {
-					productId: productId[i],
-				},
-			});
-			const restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
-			// Create a record in the place_order table
-			const placeOrderItem = await place_order.create({
-				userId,
-				productId: productId[i],
-				resturantManagerId: restaurantId, // Use the 'productId' from the 'product' table
-				quantity: quantity[i],
-				price: price[i],
-				orderId: orderData.orderId, // Use the 'orderId' from the 'order' table
-			});
-			placeOrderData.push(placeOrderItem, decrementQuantity);
-		}
-		const paymentData = await payments.create({
-			orderId: orderData.orderId,
-			status: 0,
-			userId: userId,
-		});
+        // Calculate total quantity and create a record in the order table
+        const totalQuantity = products.reduce((acc, product) => acc + parseInt(product.quantity, 10), 0);
+        const orderData = await order.create({
+            totalQuantity: totalQuantity,
+            orderType: orderType,
+            amount: amount,
+            paymentType: paymentType,
+            date: date,
+            time: time,
+            orderState: status,
+            // other fields...
+        });
 
-		res.json({orderData, placeOrderData, paymentData});
-		console.log(placeOrderData);
-		console.log(orderData);
-	} catch (err) {
-		console.log(err);
-		res.status(500).json({error: 'An error occurred while creating the order.'});
-	}
+        const placeOrderData = [];
+        for (const product of products) {
+            const { productId, quantity, price } = product;
+            const decrementQuantity = await sell_product.decrement('quantity', {
+                by: quantity,
+                where: {
+                    productId: productId,
+                },
+            });
+            const restaurantobjId = await sell_product.findOne({
+                attributes: ['manufactureId'],
+                where: {
+                    productId: productId,
+                },
+            });
+            const restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
+
+            // Create a record in the place_order table
+            const placeOrderItem = await place_order.create({
+                userId,
+                productId: productId,
+                resturantManagerId: restaurantId,
+                quantity: quantity,
+                price: price,
+                orderId: orderData.orderId,
+            });
+            placeOrderData.push(placeOrderItem, decrementQuantity);
+        }
+
+        const paymentData = await payments.create({
+            orderId: orderData.orderId,
+            status: 0,
+            userId: userId,
+        });
+
+        res.json({ orderData, placeOrderData, paymentData });
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'An error occurred while creating the order.' });
+    }
 });
+
 
 //post image add
 const storage2 = multer.diskStorage({
@@ -568,4 +572,41 @@ router.post('/getallproducts', async (req, res) => {
 			res.send(result);
 		});
 });
+
+//get orders for user Id in place order and order
+
+
+
+router.get('/getOrders', async (req, res) => {
+    const userId = req.query.userId;
+
+    // Define the association between place_order and order
+    place_order.hasMany(order, { foreignKey: 'orderId' });
+    order.belongsTo(place_order, { foreignKey: 'orderId' });
+
+    try {
+        const placeOrders = await place_order.findAll({
+            where: {
+                userId: userId,
+            },
+            include: [{
+                model: order,
+                as: 'orders',
+                foreignKey: 'orderId',
+            }],
+        });
+
+	
+
+
+        res.json(placeOrders);
+		console.log(placeOrders);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+});
+
 module.exports = router;
+
+
