@@ -4,10 +4,12 @@ const router = express.Router();
 const app = express();
 const multer = require('multer');
 const jwt = require('jsonwebtoken');
+const fs = require('fs');
 const Recipe = require('../../models/recipeSchema');
 const feed = require('../../models/feedsSchema');
 const order = require('../../models/ordersSchema');
-
+//app.use(express.json())
+router.use(express.json());
 const sell_product = require('../../models/sell_productsSchema');
 const payments = require('../../models/paymentsSchema');
 const User = require('../../models/userSchema');
@@ -165,6 +167,9 @@ router.post('/fetchproduct', async (req, res) => {
 	});
 	sellProducts.belongsTo(product, {
 		foreignKey: 'productId',
+	});
+	sellProducts.belongsTo(User, {
+		foreignKey: 'manufactureId',
 	});
 	product
 		.findAll({
@@ -537,7 +542,6 @@ router.post('/fetchcategories', async (req, res) => {
 	}
 });
 router.post('/getallproducts', async (req, res) => {
-	console.log('helloo');
 	// User.findAll({
 	// 	attributes: ['userId', 'city'],
 	// 	include: {
@@ -571,6 +575,33 @@ router.post('/getallproducts', async (req, res) => {
 			console.log(result);
 			res.send(result);
 		});
+});
+router.post('/fetchRestaurant', async (req, res) => {
+	restaurant
+		.findAll({
+			attributes: ['latitude', 'longitude', 'resturantName'],
+			where: {
+				resturantManagerId: req.body.id,
+			},
+		})
+		.then((response) => {
+			console.log(response);
+			res.send(response);
+		});
+});
+const storage4 = multer.diskStorage({
+	destination: './uploads/community/',
+	filename: function (req, file, cb) {
+		cb(null, Date.now() + path.extname(file.originalname));
+	},
+});
+const upload4 = multer({storage: storage4});
+router.post('/registercommunity', async (req, res) => {
+	fs.writeFile('./out.png', req.body.data, 'base64', (err) => {
+		if (err) throw err;
+	});
+	//console.log(req.body.data);
+	res.send('success');
 });
 
 //get orders for user Id in place order and order
