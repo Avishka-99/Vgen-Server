@@ -8,6 +8,7 @@ const fs = require('fs');
 const Recipe = require('../../models/recipeSchema');
 const feed = require('../../models/feedsSchema');
 const order = require('../../models/ordersSchema');
+const community = require('../../models/communitySchema');
 //app.use(express.json())
 router.use(express.json());
 const sell_product = require('../../models/sell_productsSchema');
@@ -244,18 +245,21 @@ const storage1 = multer.diskStorage({
 	},
 });
 const upload1 = multer({storage: storage1});
-router.post('/registerCommunityOrganizer', upload1.single('profilePicture'), async (req, res) => {
+
+//community organizer register
+router.post('/registerCommunityOrganizer', async (req, res) => {
 	try {
-		const {userId, organizeName, description} = req.body;
-		const {filename} = req.file;
+		const {userId, description} = req.body;
+	
 		const productData = await communityEventOrganizer.create({
 			eventOrganizerId: userId,
-			organizeName,
 			description,
 			verifyState: 0,
-			profilePicture: filename
+	       
 
 		});
+		
+
 		res.send(productData);
 	} catch (err) {
 		console.log(err);
