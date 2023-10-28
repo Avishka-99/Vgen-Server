@@ -11,6 +11,7 @@ const communityEventOrganizer = sequelize.define(
 			primaryKey: true,
 			foriegnKey: true,
 		},
+	
 		description: {
 			type: DataTypes.STRING,
 			allowNull: true,
