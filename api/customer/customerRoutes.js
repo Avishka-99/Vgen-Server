@@ -24,6 +24,8 @@ const Sequelize = require('sequelize');
 const veganUser = require('../../models/vegan_userSchema');
 const {or} = require('sequelize');
 const categories = require('../../models/categorySchema');
+const communityUser = require('../../models/community_responseSchema');
+const communityEventPhotos = require('../../models/community_event_photosSchema');
 app.use(express.json());
 router.post('/fetchrestaurants', (req, res) => {
 	User.hasOne(restaurant, {
@@ -248,23 +250,165 @@ const upload1 = multer({storage: storage1});
 
 //community organizer register
 router.post('/registerCommunityOrganizer', async (req, res) => {
-	try {
-		const {userId, description} = req.body;
-	
-		const productData = await communityEventOrganizer.create({
+	try{
+	const userId = req.body.userId;
+	const description = req.body.description;
+	communityEventOrganizer
+		.findOne({
 			eventOrganizerId: userId,
-			description,
-			verifyState: 0,
-	       
-
+			where: {
+				eventOrganizerId: userId,
+			},
+		})
+		.then(async (result) => {
+			if (!result) {
+				await communityEventOrganizer
+					.create({
+						eventOrganizerId: userId,
+						description: description,
+						verifyState: 0,
+					})
+					.then(() => {
+						res.send(productData);
+						res.send('success');
+					});
+			} else {
+				res.send('unsuccess');
+			}
 		});
+
+		}
+		catch(err){
+			console.log(err);
+		}
 		
 
-		res.send(productData);
-	} catch (err) {
+		
+	} 
+);
+//check if user is community organizer
+router.post('/checkCommunityOrganizer', async (req, res) => {
+	try{
+	const userId = req.body.userId;
+	communityEventOrganizer
+		.findOne({
+			eventOrganizerId: userId,
+			where: {
+				eventOrganizerId: userId,
+			},
+		})
+		.then(async (result) => {
+			if (!result) {
+				res.send('unsuccess');
+			} else {
+				res.send('success');
+			}
+		});
+	}
+	catch(err){
 		console.log(err);
 	}
 });
+//create community 
+router.post('/createCommunity', upload1.single('image'), async (req, res) => {
+	try{
+	const userId = req.body.userId;
+	const name = req.body.communityName;
+	const description = req.body.description;
+	const image = req.file;
+	
+	const sendData = await community.create({
+		name: name,
+		description: description,
+		image: image.filename,
+		date: Date.now(),
+		eventOrganizerId: userId,
+	});
+	res.send(sendData);
+	}
+	catch(err){
+		console.log(err);
+	}
+});
+//get community
+router.get('/getCommunity', async (req, res) => {
+	try{
+	const resData = await community.findAll();
+	res.json(resData);
+	}
+	catch(err){
+		console.log(err);
+	}
+});
+//join community
+router.post('/joinCommunity', async (req, res) => {
+	try{
+	const userId = req.body.userId;
+	const communityId = req.body.communityId;
+	const noOfMembers = req.body.noOfMembers;
+
+	communityUser.findOne
+	({
+		where:{
+			userId:userId,
+			communityId:communityId,
+		}
+	})
+	.then(async (result) => {
+		if (!result) {
+			await communityUser
+				.create({
+					userId: userId,
+					communityId: communityId,
+				})
+				.then(() => {
+					res.send('success');
+					 community.update(
+						{noOfMembers: noOfMembers},
+						{
+							where: {
+								communityId: communityId,
+							},
+						}
+					);
+
+				});
+				
+
+		} else {
+			res.send('unsuccess');
+		}
+	});
+	}
+	catch(err){
+		console.log(err);
+	}
+});
+//check if user is in community
+router.get('/checkCommunity', async (req, res) => {
+	try{
+	const userId = req.query.userId;
+
+	communityUser.findAll
+	({
+		where:{
+			userId:userId,
+		}
+	})
+	.then(async (result) => {
+		if (!result) {
+			res.send('unsuccess');
+
+		} else {
+			res.send(result);
+		}
+	});
+	}
+	catch(err){
+		console.log(err);
+	}
+});
+
 //search foods, restaurants, events
 
 const {Op} = require('sequelize');
@@ -454,64 +598,54 @@ const storage2 = multer.diskStorage({
 const upload2 = multer({storage: storage2});
 
 //create post
-router.post('/createPost', upload2.single('feedImage'), async (req, res) => {
-	console.log(req.file);
+router.post('/createPost',upload2.array('image',5), async (req, res) => {
+	
 	try {
-		const {userId, feedName, description} = req.body;
-		const {filename} = req.file;
+		const {userId, title, description} = req.body;
+		const communityId = req.query.communityId;
+		const images = req.files.map((file) => ({
+			image: file.filename,
+		}));
+
 		const feedData = await feed.create({
 			userId,
-			feedName,
-			description,
-			feedImage: filename,
+			communityId,
+			title,
+			description
+	
 		});
-		res.json(feedData);
+		
+      await communityEventPhotos.bulkCreate(
+			images.map((image) => ({
+				
+				eventId: feedData.postId,
+				images: image.image,
+			})));
+		res.send(feedData);
 	} catch (err) {
-		console.log(err);
-	}
-});
-//get post
-router.get('/getFeed', async (req, res) => {
-	try {
-		const feedData = await feed.findAll();
-		res.json(feedData);
-	} catch (err) {
+
 		console.log(err);
 	}
 });
 
-//delete post
-router.delete('/deleteFeed/:id', async (req, res) => {
-	try {
-		const feedData = await feed.destroy({
-			where: {
-				feedId: req.params.id,
-			},
-		});
-		res.json(feedData);
-	} catch (err) {
+//get post
+router.get('/getFeed', async (req, res) => {
+	const communityId = req.query.communityId;
+    try{
+	const resData = await feed.findAll({
+		where: {
+			communityId: communityId,
+		},
+	});
+	res.json(resData);
+	}catch(err){
 		console.log(err);
 	}
+
 });
-//update post
-router.put('/updateFeed/:id', async (req, res) => {
-	try {
-		const feedData = await feed.update(
-			{
-				feedName: req.body.feedName,
-				description: req.body.description,
-			},
-			{
-				where: {
-					feedId: req.params.id,
-				},
-			}
-		);
-		res.json(feedData);
-	} catch (err) {
-		console.log(err);
-	}
-});
+
+
+
 //get user by userId
 router.get('/getUser/:id', async (req, res) => {
 	try {
