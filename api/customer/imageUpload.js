@@ -17,8 +17,8 @@ router.post('/registercommunity', async (req, res) => {
 		community
 			.create({
 				name: community_name,
-                date:new Date().toISOString().slice(0, 10),
-                time:(new Date().toLocaleString().split(',')[1]).substr(0,9),
+				date: new Date().toISOString().slice(0, 10),
+				time: new Date().toLocaleString().split(',')[1].substr(0, 9),
 				description: description,
 				eventOrganizerId: user_id,
 				image: image_name,

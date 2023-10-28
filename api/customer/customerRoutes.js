@@ -28,6 +28,11 @@ const communityUser = require('../../models/community_responseSchema');
 const communityEventPhotos = require('../../models/community_event_photosSchema');
 app.use(express.json());
 router.post('/fetchrestaurants', (req, res) => {
+	//console.log(req.body);
+	//const userId = req.body.userId;
+	//const data = JSON.parse(fs.readFileSync('./data/' + userId + '.json'));
+	//console.log(JSON.parse(data).stores)
+	//console.log(userId)
 	User.hasOne(restaurant, {
 		foreignKey: 'resturantManagerId',
 	});
@@ -47,6 +52,7 @@ router.post('/fetchrestaurants', (req, res) => {
 			// userId: restaurant.resturantManagerId,
 		},
 	}).then((result) => {
+		//const response = {result, data};
 		res.send(result);
 	});
 	// console.log(restaurants)
@@ -714,7 +720,7 @@ router.post('/getallproducts', async (req, res) => {
 			res.send(result);
 		});
 });
-router.post('/fetchRestaurant', async (req, res) => {
+router.post('/fetchrestaurant', async (req, res) => {
 	restaurant
 		.findAll({
 			attributes: ['latitude', 'longitude', 'resturantName'],
@@ -753,6 +759,24 @@ router.post('/requestcommunityorganizer', async (req, res) => {
 				res.send('unsuccess');
 			}
 		});
+});
+router.post('/addfavstore', async (req, res) => {
+	const user_id = req.body.user_id;
+	const data = req.body.data;
+	const path = './data/' + user_id + '.json';
+	const fileData = fs.readFileSync(path);
+	console.log(JSON.parse(fileData));
+	const config = {foods: JSON.parse(fileData).foods, stores: data};
+	//console.log(config)
+	// const config = {stores: [], foods: []};
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	console.log(data);
+	res.send('success');
 });
 
 //get orders for user Id in place order and order
