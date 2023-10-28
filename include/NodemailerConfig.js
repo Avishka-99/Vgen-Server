@@ -11,7 +11,7 @@ var transporter = nodemailer.createTransport({
 	},
 	secure: false,
 });
-exports.sendMail = (otp,email) => {
+exports.sendMail = (otp, email) => {
 	var mailOptions = {
 		from: 'vgeninc@gmail.com',
 		to: email,
@@ -20,6 +20,7 @@ exports.sendMail = (otp,email) => {
 	};
 	transporter.sendMail(mailOptions, function (error, info) {
 		if (error) {
+			console.log(error)
 			return error;
 		} else {
 			return 'Email sent: ' + info.response;
