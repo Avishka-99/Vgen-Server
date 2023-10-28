@@ -3,7 +3,7 @@ const { DataTypes } = require('sequelize');
 const sequelize = require('./db');
 
 // Define the User model
-const communityResponse = sequelize.define('community_response', {
+const communityResponse = sequelize.define('community_member', {
 userId:{
     type: DataTypes.INTEGER,
     allowNull: false,
