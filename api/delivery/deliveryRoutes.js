@@ -65,10 +65,7 @@ router.get('/deliveryOrders', async (req, res) => {
          FROM delivery_people WHERE delivery_people.deliveryPersonId=${userid};`
 		);
 
-		// const udatelocation=await sequelize.query(`UPDATE delivery_persons SET delivery_persons.latitude=${latitude} ,
-		// delivery_persons.longitude=${longitude}
-		// WHERE delivery_persons.deliveryPersonId=${userid};`)
-
+		
 		const result = {
 			deliveryData: deliveryData,
 			orderData: orderData,
@@ -124,42 +121,7 @@ router.get('/deliveryOrders', async (req, res) => {
 			}
 		}
 
-		//  result.deliveryData.forEach((data)=>{
-		//     const key=`${data.deliveryPersonId}`
-		//     uniqdeliveryData.set(key,data)
-
-		//  })
-		// const newDeliveyData=Array.from(uniqdeliveryData.values());
-		// const neworderData = Array.from(uniqorderData.values());
-		// // console.log(neworderData)
-		// const deliverLatitude = result.deliveryData[0][0].latitude;
-		// const deliveryLongitude = result.deliveryData[0][0].longitude;
-		// console.log(deliverLatitude)
-		// console.log(deliveryLongitude)
-
-		// for (let i = 0; i < neworderData.length; i++) {
-		// 	for (let j = 0; j < neworderData[i].length; j++) {
-		// 		const RestDistance = calculateDistance(neworderData[i][j].rest_latitude, neworderData[i][j].rest_longitude, deliverLatitude, deliveryLongitude);
-		// 		const VegenuserDistance = calculateDistance(neworderData[i][j].vegan_latitude, neworderData[i][j].vegan_longitude, deliverLatitude, deliveryLongitude);
-		// 		const timeClose = getTime(RestDistance);
-		// 		const closetimeShop = neworderData[i][j].closeTime;
-		// 		const openTimeShop = neworderData[i][j].openTime;
-		// 		const orderDate = neworderData[i][j].date;
-		// 		const aroundTime = AroundTime(timeClose);
-		// 		// console.log(aroundTime)
-		// 		//console.log("open",openTimeShop)
-		// 		//console.log("close",closetimeShop)
-		// 		// console.log("time clo",timeClose)
-		// 		// console.log()
-		// 		// console.log(orderDate)
-
-		// 		if (VegenuserDistance <= 10 && RestDistance <= 10 && isTimeBetween(new Date(`1970-01-01T${openTimeShop}`), new Date(`1970-01-01T${closetimeShop}`), new Date(`1970-01-01T${aroundTime}`)) && areDatesEqual(new Date(orderDate), new Date())) {
-		// 			//
-		// 			frontEnd_pass_orders.push(neworderData[i][j]);
-		// 			//console.log("distinc",distance)
-		// 		}
-		// 	}
-		// }
+		
 
 		console.log('front end data', frontEnd_pass_orders);
 
