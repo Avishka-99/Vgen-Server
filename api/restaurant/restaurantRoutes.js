@@ -16,7 +16,7 @@ const place_complain=require('../../models/place_complainSchema')
 const multer = require('multer');
 const {Sequelize, Op, where} = require('sequelize');
 const sequelize = require('../../models/db');
-
+router.use(express.json());
 // product store
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {

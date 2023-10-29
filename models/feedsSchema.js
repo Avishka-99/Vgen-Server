@@ -3,8 +3,8 @@ const sequelize = require('./db');
 
 
 // Define the User model
-const feed = sequelize.define('feed', {
-    feedId: {
+const feed = sequelize.define('post', {
+    postId: {
         type: DataTypes.INTEGER,
         allowNull: false,
         primaryKey: true,
@@ -20,13 +20,19 @@ const feed = sequelize.define('feed', {
                      model: 'user',
                      key: 'userId'
               } 
- },feedName:{
+ },communityId:{
+              type: DataTypes.INTEGER,
+              allowNull: true,
+              foriegnKey:true,
+              references: {
+              model: 'community',
+              key: 'communityId'
+       } 
+       
+ },title:{
         type: DataTypes.STRING,
         allowNull: true
  },description:{
-        type: DataTypes.STRING,
-        allowNull: true
- },feedImage:{
         type: DataTypes.STRING,
         allowNull: true
  }

@@ -10,6 +10,7 @@ const raw_placeOrders = require('../../models/raw_place_orderSchema');
 const refunds=require('../../models/refundsSchema.')
 const sequelize = require('../../models/db');
 const { time } = require('console');
+router.use(express.json());
 // product store
 const storage = multer.diskStorage({
 	destination: function (req, file, cb) {
