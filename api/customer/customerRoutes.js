@@ -591,7 +591,7 @@ const upload2 = multer({storage: storage2});
 router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 	try {
 		const {userId, title, description} = req.body;
-		const communityId = req.query.communityId;
+		const communityId = req.body.communityId;
 		const images = req.files.map((file) => ({
 			image: file.filename,
 		}));
@@ -617,18 +617,40 @@ router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 
 //get post
 router.get('/getFeed', async (req, res) => {
-	const communityId = req.query.communityId;
-	try {
-		const resData = await feed.findAll({
-			where: {
-				communityId: communityId,
-			},
-		});
-		res.json(resData);
-	} catch (err) {
-		console.log(err);
-	}
+    const communityId = req.query.communityId;
+    try {
+        const posts = await feed.findAll({
+            where: {
+                communityId: communityId,
+            },
+        });
+
+        const postIds = posts.map(post => post.postId); // Extract postIds from resData
+
+        const eventPhotos = await communityEventPhotos.findAll({
+            where: {
+                eventId: postIds, // Use the extracted postIds to filter communityEventPhotos
+            },
+        });
+
+        // Combine posts with their respective event photos
+        const combinedData = posts.map(post => {
+            const photos = eventPhotos.filter(photo => photo.eventId === post.postId);
+            return {
+                ...post.toJSON(), // Convert the Sequelize object to a plain JSON object
+                images: photos,
+            };
+        });
+
+        res.json(combinedData);
+    } catch (err) {
+        console.log(err);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
 });
+
+
+
 
 //get user by userId
 router.get('/getUser/:id', async (req, res) => {
