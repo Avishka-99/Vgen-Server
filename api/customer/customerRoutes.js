@@ -422,6 +422,8 @@ router.get('/search', async (req, res) => {
 	}
 });
 
+
+
 //new customer codes
 // product store
 const storage3 = multer.diskStorage({
@@ -610,10 +612,21 @@ router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 			}))
 		);
 		res.send(feedData);
+		const id=feedData.postId;
+		const path = './data/post/' + id + '.json';
+		const config = {comments: [], likes: []};
+		try {
+			fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+			console.log('Data successfully saved to disk');
+		} catch (error) {
+			console.log('An error has occurred ', error);
+		}
 	} catch (err) {
 		console.log(err);
 	}
 });
+
+
 
 //get post
 router.get('/getFeed', async (req, res) => {
@@ -650,6 +663,7 @@ router.get('/getFeed', async (req, res) => {
 });
 
 
+	
 
 
 //get user by userId
