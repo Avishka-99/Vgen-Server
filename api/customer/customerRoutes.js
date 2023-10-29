@@ -766,7 +766,7 @@ router.post('/addfavstore', async (req, res) => {
 	const path = './data/users/' + user_id + '.json';
 	const fileData = fs.readFileSync(path);
 	console.log(JSON.parse(fileData));
-	const config = {foods: JSON.parse(fileData).foods, stores: data};
+	const config = {foods: JSON.parse(fileData).foods, stores: data, communities: JSON.parse(fileData).communities};
 	//console.log(config)
 	// const config = {stores: [], foods: []};
 	try {
