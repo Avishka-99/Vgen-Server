@@ -11,6 +11,7 @@ router.post('/registercommunity', async (req, res) => {
 	const community_name = req.body.communityName;
 	const description = req.body.communityDescription;
 	const user_id = req.body.user_id;
+	const visibility=req.body.visibility;
 	fs.writeFile('./uploads/community/' + image_name, req.body.image, 'base64', (err) => {
 		if (err) throw err;
 	}).then((result) => {
@@ -21,6 +22,7 @@ router.post('/registercommunity', async (req, res) => {
 				time: new Date().toLocaleString().split(',')[1].substr(0, 9),
 				description: description,
 				eventOrganizerId: user_id,
+				visibility:visibility,
 				image: image_name,
 			})
 			.then((response) => {
