@@ -1,9 +1,8 @@
-// Used to handle user related requests
 const path = require('path');
 const express = require('express');
 const router = express.Router();
 const app = express();
-
+const fs = require('fs');
 const jwt = require('jsonwebtoken');
 const User = require('../models/userSchema');
 const product = require('../models/productSchema');
@@ -71,9 +70,20 @@ router.post('/signinuser', (req, res) => {
 										(lang = result[0].latitude), (long = result[0].longitude);
 									});
 							}
-							const secretKey = 'Avishka';
-							const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-							const response = {type, token, userID, lang, long};
+							var response;
+							if (type == 'Customer') {
+								const data = JSON.parse(fs.readFileSync('./data/users/' + userID + '.json'));
+								const stores = data.stores;
+								const foods = data.foods;
+								const communities = data.communities;
+								const secretKey = 'Avishka';
+								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
+								response = {type, token, userID, lang, long, stores, foods, communities};
+							} else {
+								const secretKey = 'Avishka';
+								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
+								response = {type, token, userID, lang, long};
+							}
 							res.send(response);
 						}
 					} else {
@@ -91,7 +101,7 @@ router.post('/registeruser', (req, res) => {
 	const password = req.body.password;
 	const firstName = req.body.firstName;
 	const lastName = req.body.lastName;
-	const nic = req.body.age;
+	const nic = req.body.nic;
 	const userRole = req.body.userRole;
 	const contactNo = req.body.contactNo;
 	const latitude = req.body.latitude;
@@ -117,6 +127,18 @@ router.post('/registeruser', (req, res) => {
 						nic: nic,
 						userRole: userRole,
 						contactNo: contactNo,
+					}).then((response) => {
+						const id = response.dataValues.userId;
+						if (userRole == 'Customer') {
+							const path = './data/users/' + id + '.json';
+							const config = {stores: [], foods: [], communities: []};
+							try {
+								fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+								console.log('Data successfully saved to disk');
+							} catch (error) {
+								console.log('An error has occurred ', error);
+							}
+						}
 					});
 					const otp = generateOtp(6);
 					await User.update(
@@ -152,7 +174,7 @@ router.post('/registeruser', (req, res) => {
 						}
 					});
 					var mailStatus = sendMail(otp, email);
-					//console.log(mailStatus);
+					console.log(mailStatus);
 					res.send({type: 'success', message: 'Account created successfully'});
 					//res.send(mailStatus);
 				} else {
