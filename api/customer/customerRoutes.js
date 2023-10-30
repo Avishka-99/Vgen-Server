@@ -256,161 +256,146 @@ const upload1 = multer({storage: storage1});
 
 //community organizer register
 router.post('/registerCommunityOrganizer', async (req, res) => {
-	try{
-	const userId = req.body.userId;
-	const description = req.body.description;
-	communityEventOrganizer
-		.findOne({
-			eventOrganizerId: userId,
-			where: {
+	try {
+		const userId = req.body.userId;
+		const description = req.body.description;
+		communityEventOrganizer
+			.findOne({
 				eventOrganizerId: userId,
-			},
-		})
-		.then(async (result) => {
-			if (!result) {
-				await communityEventOrganizer
-					.create({
-						eventOrganizerId: userId,
-						description: description,
-						verifyState: 0,
-					})
-					.then(() => {
-						res.send(productData);
-						res.send('success');
-					});
-			} else {
-				res.send('unsuccess');
-			}
-		});
-
-		}
-		catch(err){
-			console.log(err);
-		}
-		
-
-		
-	} 
-);
-//check if user is community organizer
-router.post('/checkCommunityOrganizer', async (req, res) => {
-	try{
-	const userId = req.body.userId;
-	communityEventOrganizer
-		.findOne({
-			eventOrganizerId: userId,
-			where: {
-				eventOrganizerId: userId,
-			},
-		})
-		.then(async (result) => {
-			if (!result) {
-				res.send('unsuccess');
-			} else {
-				res.send('success');
-			}
-		});
-	}
-	catch(err){
+				where: {
+					eventOrganizerId: userId,
+				},
+			})
+			.then(async (result) => {
+				if (!result) {
+					await communityEventOrganizer
+						.create({
+							eventOrganizerId: userId,
+							description: description,
+							verifyState: 0,
+						})
+						.then(() => {
+							res.send(productData);
+							res.send('success');
+						});
+				} else {
+					res.send('unsuccess');
+				}
+			});
+	} catch (err) {
 		console.log(err);
 	}
 });
-//create community 
-router.post('/createCommunity', upload1.single('image'), async (req, res) => {
-	try{
-	const userId = req.body.userId;
-	const name = req.body.communityName;
-	const description = req.body.description;
-	const image = req.file;
-	
-	const sendData = await community.create({
-		name: name,
-		description: description,
-		image: image.filename,
-		date: Date.now(),
-		eventOrganizerId: userId,
-	});
-	res.send(sendData);
+//check if user is community organizer
+router.post('/checkCommunityOrganizer', async (req, res) => {
+	try {
+		const userId = req.body.userId;
+		communityEventOrganizer
+			.findOne({
+				eventOrganizerId: userId,
+				where: {
+					eventOrganizerId: userId,
+				},
+			})
+			.then(async (result) => {
+				if (!result) {
+					res.send('unsuccess');
+				} else {
+					res.send('success');
+				}
+			});
+	} catch (err) {
+		console.log(err);
 	}
-	catch(err){
+});
+//create community
+router.post('/createCommunity', upload1.single('image'), async (req, res) => {
+	try {
+		const userId = req.body.userId;
+		const name = req.body.communityName;
+		const description = req.body.description;
+		const image = req.file;
+
+		const sendData = await community.create({
+			name: name,
+			description: description,
+			image: image.filename,
+			date: Date.now(),
+			eventOrganizerId: userId,
+		});
+		res.send(sendData);
+	} catch (err) {
 		console.log(err);
 	}
 });
 //get community
 router.get('/getCommunity', async (req, res) => {
-	try{
-	const resData = await community.findAll();
-	res.json(resData);
-	}
-	catch(err){
+	try {
+		const resData = await community.findAll();
+		res.json(resData);
+	} catch (err) {
 		console.log(err);
 	}
 });
 //join community
 router.post('/joinCommunity', async (req, res) => {
-	try{
-	const userId = req.body.userId;
-	const communityId = req.body.communityId;
-	const noOfMembers = req.body.noOfMembers;
+	try {
+		const userId = req.body.userId;
+		const communityId = req.body.communityId;
+		const noOfMembers = req.body.noOfMembers;
 
-	communityUser.findOne
-	({
-		where:{
-			userId:userId,
-			communityId:communityId,
-		}
-	})
-	.then(async (result) => {
-		if (!result) {
-			await communityUser
-				.create({
+		communityUser
+			.findOne({
+				where: {
 					userId: userId,
 					communityId: communityId,
-				})
-				.then(() => {
-					res.send('success');
-					 community.update(
-						{noOfMembers: noOfMembers},
-						{
-							where: {
-								communityId: communityId,
-							},
-						}
-					);
-
-				});
-				
-
-		} else {
-			res.send('unsuccess');
-		}
-	});
-	}
-	catch(err){
+				},
+			})
+			.then(async (result) => {
+				if (!result) {
+					await communityUser
+						.create({
+							userId: userId,
+							communityId: communityId,
+						})
+						.then(() => {
+							res.send('success');
+							community.update(
+								{noOfMembers: noOfMembers},
+								{
+									where: {
+										communityId: communityId,
+									},
+								}
+							);
+						});
+				} else {
+					res.send('unsuccess');
+				}
+			});
+	} catch (err) {
 		console.log(err);
 	}
 });
 //check if user is in community
 router.get('/checkCommunity', async (req, res) => {
-	try{
-	const userId = req.query.userId;
+	try {
+		const userId = req.query.userId;
 
-	communityUser.findAll
-	({
-		where:{
-			userId:userId,
-		}
-	})
-	.then(async (result) => {
-		if (!result) {
-			res.send('unsuccess');
-
-		} else {
-			res.send(result);
-		}
-	});
-	}
-	catch(err){
+		communityUser
+			.findAll({
+				where: {
+					userId: userId,
+				},
+			})
+			.then(async (result) => {
+				if (!result) {
+					res.send('unsuccess');
+				} else {
+					res.send(result);
+				}
+			});
+	} catch (err) {
 		console.log(err);
 	}
 });
@@ -436,6 +421,8 @@ router.get('/search', async (req, res) => {
 		res.status(500).json({error: 'Internal Server Error'});
 	}
 });
+
+
 
 //new customer codes
 // product store
@@ -479,6 +466,7 @@ router.get('/productGet', async (req, res) => {
 				as: 'sell_products',
 				foreignKey: 'productId',
 			},
+			
 		});
 		res.json(products);
 	} catch (err) {
@@ -528,69 +516,68 @@ router.post('/verifyuser', async (req, res) => {
 
 // Define the association between place_order and order
 router.post('/orderPost', async (req, res) => {
-    try {
-        const { userId, products, paymentType, amount, orderType, status, date, time } = req.body;
+	try {
+		const {userId, products, paymentType, amount, orderType, status, date, time} = req.body;
 
-        if (!Array.isArray(products) || products.length === 0) {
-            res.status(400).json({ error: 'Invalid product data.' });
-            return;
-        }
+		if (!Array.isArray(products) || products.length === 0) {
+			res.status(400).json({error: 'Invalid product data.'});
+			return;
+		}
 
-        // Calculate total quantity and create a record in the order table
-        const totalQuantity = products.reduce((acc, product) => acc + parseInt(product.quantity, 10), 0);
-        const orderData = await order.create({
-            totalQuantity: totalQuantity,
-            orderType: orderType,
-            amount: amount,
-            paymentType: paymentType,
-            date: date,
-            time: time,
-            orderState: status,
-            // other fields...
-        });
+		// Calculate total quantity and create a record in the order table
+		const totalQuantity = products.reduce((acc, product) => acc + parseInt(product.quantity, 10), 0);
+		const orderData = await order.create({
+			totalQuantity: totalQuantity,
+			orderType: orderType,
+			amount: amount,
+			paymentType: paymentType,
+			date: date,
+			time: time,
+			orderState: status,
+			// other fields...
+		});
 
-        const placeOrderData = [];
-        for (const product of products) {
-            const { productId, quantity, price } = product;
-            const decrementQuantity = await sell_product.decrement('quantity', {
-                by: quantity,
-                where: {
-                    productId: productId,
-                },
-            });
-            const restaurantobjId = await sell_product.findOne({
-                attributes: ['manufactureId'],
-                where: {
-                    productId: productId,
-                },
-            });
-            const restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
+		const placeOrderData = [];
+		for (const product of products) {
+			const {productId, quantity, price} = product;
+			const decrementQuantity = await sell_product.decrement('quantity', {
+				by: quantity,
+				where: {
+					productId: productId,
+				},
+			});
+			const restaurantobjId = await sell_product.findOne({
+				attributes: ['manufactureId'],
+				where: {
+					productId: productId,
+				},
+			});
+			const restaurantId = restaurantobjId ? restaurantobjId.manufactureId : null;
 
-            // Create a record in the place_order table
-            const placeOrderItem = await place_order.create({
-                userId,
-                productId: productId,
-                resturantManagerId: restaurantId,
-                quantity: quantity,
-                price: price,
-                orderId: orderData.orderId,
-            });
-            placeOrderData.push(placeOrderItem, decrementQuantity);
-        }
+			// Create a record in the place_order table
+			const placeOrderItem = await place_order.create({
+				userId,
+				productId: productId,
+				resturantManagerId: restaurantId,
+				quantity: quantity,
+				price: price,
+				orderId: orderData.orderId,
+			});
+			placeOrderData.push(placeOrderItem, decrementQuantity);
+		}
 
-        const paymentData = await payments.create({
-            orderId: orderData.orderId,
-            status: 0,
-            userId: userId,
-        });
+		const paymentData = await payments.create({
+			orderId: orderData.orderId,
+			status: 0,
+			userId: userId,
+		});
 
-        res.json({ orderData, placeOrderData, paymentData });
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ error: 'An error occurred while creating the order.' });
-    }
+		res.json({orderData, placeOrderData, paymentData});
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'An error occurred while creating the order.'});
+	}
 });
-
 
 //post image add
 const storage2 = multer.diskStorage({
@@ -604,8 +591,7 @@ const storage2 = multer.diskStorage({
 const upload2 = multer({storage: storage2});
 
 //create post
-router.post('/createPost',upload2.array('image',5), async (req, res) => {
-	
+router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 	try {
 		const {userId, title, description} = req.body;
 		const communityId = req.body.communityId;
@@ -617,22 +603,31 @@ router.post('/createPost',upload2.array('image',5), async (req, res) => {
 			userId,
 			communityId,
 			title,
-			description
-	
+			description,
 		});
-		
-      await communityEventPhotos.bulkCreate(
+
+		await communityEventPhotos.bulkCreate(
 			images.map((image) => ({
-				
 				eventId: feedData.postId,
 				images: image.image,
-			})));
+			}))
+		);
 		res.send(feedData);
+		const id=feedData.postId;
+		const path = './data/post/' + id + '.json';
+		const config = {comments: [], likes: []};
+		try {
+			fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+			console.log('Data successfully saved to disk');
+		} catch (error) {
+			console.log('An error has occurred ', error);
+		}
 	} catch (err) {
-
 		console.log(err);
 	}
 });
+
+
 
 //get post
 router.get('/getFeed', async (req, res) => {
@@ -667,8 +662,62 @@ router.get('/getFeed', async (req, res) => {
         res.status(500).json({ error: 'Internal Server Error' });
     }
 });
+//liked post
+router.post('/likedPost', async (req, res) => {
+
+	const postId = req.body.postId;
+	const userId = req.body.userId;
+	const like = req.body.like;
+	const path = './data/post/' + postId + '.json';
+    
+	const filedata=fs.readFileSync(path);
+	const data=JSON.parse(filedata);
+	const config = {likes: data.likes};
+	if(like==true){
+		//check if user already liked
+		const index=config.likes.indexOf(userId);
+		if(index==-1){
+			config.likes.push(userId);
+		}
+		else{
+			config.likes.splice(index,1);
+		}
+		
+	}
+	else{
+		const index=config.likes.indexOf(userId);
+		config.likes.splice(index,1);
+	}
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	res.send('success'); 
+});
+//comment post
+router.post('/commentPost', async (req, res) => {
+	const postId = req.body.postId;
+	const userId = req.body.userId;
+	const comment = req.body.comment;
+	const path = './data/post/' + postId + '.json';
+    const fildat=fs.readFileSync(path);
+	const data=JSON.parse(fildat);
+	const config = {comments: data.comments};
+	config.comments.push({comments:comment});
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	res.send('success');
+});
 
 
+
+	
 
 
 //get user by userId
@@ -725,6 +774,9 @@ router.post('/getallproducts', async (req, res) => {
 	// 		console.log(result);
 	// 		res.send(result);
 	// 	});
+	product.hasMany(sellProducts, { foreignKey: 'productId' });
+sellProducts.hasMany(restaurant, { foreignKey: 'resturantManagerId' });
+restaurant.belongsTo(sellProducts, { foreignKey: 'resturantManagerId' });
 	product
 		.findAll({
 			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'vegan_category', 'cooking_time', 'ingredient'],
@@ -733,6 +785,8 @@ router.post('/getallproducts', async (req, res) => {
 				attributes: ['manufactureId', 'price', 'quantity', 'options'],
 				required: true,
 			},
+				
+			
 		})
 		.then((result) => {
 			console.log(result);
@@ -782,7 +836,7 @@ router.post('/requestcommunityorganizer', async (req, res) => {
 router.post('/addfavstore', async (req, res) => {
 	const user_id = req.body.user_id;
 	const data = req.body.data;
-	const path = './data/' + user_id + '.json';
+	const path = './data/users/' + user_id + '.json';
 	const fileData = fs.readFileSync(path);
 	console.log(JSON.parse(fileData));
 	const config = {foods: JSON.parse(fileData).foods, stores: data};
@@ -799,39 +853,36 @@ router.post('/addfavstore', async (req, res) => {
 });
 
 //get orders for user Id in place order and order
-
-
-
 router.get('/getOrders', async (req, res) => {
-    const userId = req.query.userId;
 
-    // Define the association between place_order and order
-    place_order.hasMany(order, { foreignKey: 'orderId' });
-    order.belongsTo(place_order, { foreignKey: 'orderId' });
-
-    try {
-        const placeOrders = await place_order.findAll({
-            where: {
-                userId: userId,
-            },
-            include: [{
-                model: order,
-                as: 'orders',
-                foreignKey: 'orderId',
-            }],
-        });
-
+	const userId = req.query.userId;
+	place_order.hasMany(order, {
+		foreignKey: 'orderId',
+	});
+	order.belongsTo(place_order, {
+		foreignKey: 'orderId',
+	});
 	
+	const result = await place_order.findAll({
+		attributes: ['quantity', 'price', 'resturantManagerId'],
+		include: {
+			model: order,
+			attributes: ['date', 'time'],
+			required: true,
+			where: {
+			     orderId: Sequelize.col('place_order.orderId'),
+			},
+		},
 
+	});
+	res.json(result);
+}
+);
 
-        res.json(placeOrders);
-		console.log(placeOrders);
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+router.post('/fetchcommunities', async (req, res) => {
+	community.findAll().then((response) => {
+		console.log(response);
+		res.send(response);
+	});
 });
-
 module.exports = router;
-
-

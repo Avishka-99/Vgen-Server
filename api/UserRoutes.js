@@ -72,12 +72,13 @@ router.post('/signinuser', (req, res) => {
 							}
 							var response;
 							if (type == 'Customer') {
-								const data = JSON.parse(fs.readFileSync('./data/' + userID + '.json'));
+								const data = JSON.parse(fs.readFileSync('./data/users/' + userID + '.json'));
 								const stores = data.stores;
 								const foods = data.foods;
+								const communities = data.communities;
 								const secretKey = 'Avishka';
 								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-								response = {type, token, userID, lang, long, stores, foods};
+								response = {type, token, userID, lang, long, stores, foods, communities};
 							} else {
 								const secretKey = 'Avishka';
 								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
@@ -128,13 +129,15 @@ router.post('/registeruser', (req, res) => {
 						contactNo: contactNo,
 					}).then((response) => {
 						const id = response.dataValues.userId;
-						const path = './data/' + id + '.json';
-						const config = {stores: [], foods: []};
-						try {
-							fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
-							console.log('Data successfully saved to disk');
-						} catch (error) {
-							console.log('An error has occurred ', error);
+						if (userRole == 'Customer') {
+							const path = './data/users/' + id + '.json';
+							const config = {stores: [], foods: [], communities: []};
+							try {
+								fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+								console.log('Data successfully saved to disk');
+							} catch (error) {
+								console.log('An error has occurred ', error);
+							}
 						}
 					});
 					const otp = generateOtp(6);
