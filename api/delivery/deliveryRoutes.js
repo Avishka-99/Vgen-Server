@@ -62,11 +62,11 @@ router.get('/deliveryOrders', async (req, res) => {
 					vegan_users
 					ON 
 					vegan_users.userId=place_orders.userId
-				    WHERE orders.orderId=0 AND orders.deliveryState=0 AND orders.foodType="Hot" AND orders.deliveryPersonId=${userid}
+				    WHERE  orders.deliveryState=0 AND orders.foodType="Hot" AND orders.deliveryPersonId=${userid}
 				    GROUP BY orders.orderId;
 		        `).then((response)=>{
-					//console.log(response)
-					res.send(response)
+					console.log(response[0])
+					res.send(response[0])
 				})  
 
 	}
