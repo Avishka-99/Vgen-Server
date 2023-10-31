@@ -1,5 +1,11 @@
 {
-	"foods": [],
-	"stores": [21, 24, 22],
-	"communities": []
+  "foods": [],
+  "stores": [
+    24,
+    22,
+    21
+  ],
+  "communities": [
+    5
+  ]
 }

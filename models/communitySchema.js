@@ -40,10 +40,10 @@ const community = sequelize.define(
 			type: DataTypes.STRING,
 			allowNull: true,
 		},
-		visibility:{
-			type:DataTypes.INTEGER,
-			allowNull:true,
-		}
+		visibility: {
+			type: DataTypes.INTEGER,
+			allowNull: true,
+		},
 	},
 
 	{

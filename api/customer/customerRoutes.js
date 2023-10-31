@@ -422,8 +422,6 @@ router.get('/search', async (req, res) => {
 	}
 });
 
-
-
 //new customer codes
 // product store
 const storage3 = multer.diskStorage({
@@ -612,7 +610,7 @@ router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 			}))
 		);
 		res.send(feedData);
-		const id=feedData.postId;
+		const id = feedData.postId;
 		const path = './data/post/' + id + '.json';
 		const config = {comments: [], likes: []};
 		try {
@@ -626,45 +624,39 @@ router.post('/createPost', upload2.array('image', 5), async (req, res) => {
 	}
 });
 
-
-
 //get post
 router.get('/getFeed', async (req, res) => {
-    const communityId = req.query.communityId;
-    try {
-        const posts = await feed.findAll({
-            where: {
-                communityId: communityId,
-            },
-        });
+	const communityId = req.query.communityId;
+	try {
+		const posts = await feed.findAll({
+			where: {
+				communityId: communityId,
+			},
+		});
 
-        const postIds = posts.map(post => post.postId); // Extract postIds from resData
+		const postIds = posts.map((post) => post.postId); // Extract postIds from resData
 
-        const eventPhotos = await communityEventPhotos.findAll({
-            where: {
-                eventId: postIds, // Use the extracted postIds to filter communityEventPhotos
-            },
-        });
+		const eventPhotos = await communityEventPhotos.findAll({
+			where: {
+				eventId: postIds, // Use the extracted postIds to filter communityEventPhotos
+			},
+		});
 
-        // Combine posts with their respective event photos
-        const combinedData = posts.map(post => {
-            const photos = eventPhotos.filter(photo => photo.eventId === post.postId);
-            return {
-                ...post.toJSON(), // Convert the Sequelize object to a plain JSON object
-                images: photos,
-            };
-        });
+		// Combine posts with their respective event photos
+		const combinedData = posts.map((post) => {
+			const photos = eventPhotos.filter((photo) => photo.eventId === post.postId);
+			return {
+				...post.toJSON(), // Convert the Sequelize object to a plain JSON object
+				images: photos,
+			};
+		});
 
-        res.json(combinedData);
-    } catch (err) {
-        console.log(err);
-        res.status(500).json({ error: 'Internal Server Error' });
-    }
+		res.json(combinedData);
+	} catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'Internal Server Error'});
+	}
 });
-
-
-	
-
 
 //get user by userId
 router.get('/getUser/:id', async (req, res) => {
@@ -828,5 +820,41 @@ router.post('/fetchcommunities', async (req, res) => {
 		console.log(response);
 		res.send(response);
 	});
+});
+router.post('/joincommunitymobile', async (req, res) => {
+	const user_id = req.body.userId;
+	console.log(user_id);
+	const path = './data/users/' + user_id + '.json';
+	const fileData = fs.readFileSync(path);
+	var communityArray = JSON.parse(fileData).communities;
+	if (communityArray.indexOf(user_id) == -1) {
+		communityArray.push(user_id);
+		const config = {foods: JSON.parse(fileData).foods, stores: JSON.parse(fileData).stores, communities: communityArray};
+		console.log(config);
+	}
+	//console.log(communityArray)
+	communityArray.push(user_id);
+	console.log(communityArray);
+	//console.log((JSON.parse(fileData).foods));
+	const config = {foods: JSON.parse(fileData).foods, stores: JSON.parse(fileData).stores, communities: JSON.parse(fileData).communities};
+	console.log(config);
+	// try {
+	// 	fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+	// 	console.log('Data successfully saved to disk');
+	// } catch (error) {
+	// 	console.log('An error has occurred ', error);
+	// }
+});
+router.post('/getcommunitydetails', async (req, res) => {
+	communityUser
+		.count({
+			where: {
+				communityId: req.body.communityId,
+			},
+		})
+		.then((result) => {
+			console.log(result);
+			res.send({count:result});
+		});
 });
 module.exports = router;

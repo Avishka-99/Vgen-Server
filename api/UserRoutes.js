@@ -184,5 +184,13 @@ router.post('/registeruser', (req, res) => {
 		}
 	});
 });
-
+router.post('/getuserprofile', async (req, res) => {
+	User.findAll({
+		where: {
+			userId: req.body.userId,
+		},
+	}).then((result) => {
+		res.send(result);
+	});
+});
 module.exports = router;
