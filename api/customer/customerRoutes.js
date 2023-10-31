@@ -464,6 +464,7 @@ router.get('/productGet', async (req, res) => {
 				as: 'sell_products',
 				foreignKey: 'productId',
 			},
+			
 		});
 		res.json(products);
 	} catch (err) {
@@ -657,6 +658,59 @@ router.get('/getFeed', async (req, res) => {
 		res.status(500).json({error: 'Internal Server Error'});
 	}
 });
+//liked post
+router.post('/likedPost', async (req, res) => {
+
+	const postId = req.body.postId;
+	const userId = req.body.userId;
+	const like = req.body.like;
+	const path = './data/post/' + postId + '.json';
+    
+	const filedata=fs.readFileSync(path);
+	const data=JSON.parse(filedata);
+	const config = {likes: data.likes};
+	if(like==true){
+		//check if user already liked
+		const index=config.likes.indexOf(userId);
+		if(index==-1){
+			config.likes.push(userId);
+		}
+		else{
+			config.likes.splice(index,1);
+		}
+		
+	}
+	else{
+		const index=config.likes.indexOf(userId);
+		config.likes.splice(index,1);
+	}
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	res.send('success'); 
+});
+//comment post
+router.post('/commentPost', async (req, res) => {
+	const postId = req.body.postId;
+	const userId = req.body.userId;
+	const comment = req.body.comment;
+	const path = './data/post/' + postId + '.json';
+    const fildat=fs.readFileSync(path);
+	const data=JSON.parse(fildat);
+	const config = {comments: data.comments};
+	config.comments.push({comments:comment});
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	res.send('success');
+});
+
 
 //get user by userId
 router.get('/getUser/:id', async (req, res) => {
@@ -712,6 +766,9 @@ router.post('/getallproducts', async (req, res) => {
 	// 		console.log(result);
 	// 		res.send(result);
 	// 	});
+	product.hasMany(sellProducts, { foreignKey: 'productId' });
+sellProducts.hasMany(restaurant, { foreignKey: 'resturantManagerId' });
+restaurant.belongsTo(sellProducts, { foreignKey: 'resturantManagerId' });
 	product
 		.findAll({
 			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'vegan_category', 'cooking_time', 'ingredient'],
@@ -720,6 +777,8 @@ router.post('/getallproducts', async (req, res) => {
 				attributes: ['manufactureId', 'price', 'quantity', 'options'],
 				required: true,
 			},
+				
+			
 		})
 		.then((result) => {
 			console.log(result);
@@ -786,35 +845,32 @@ router.post('/addfavstore', async (req, res) => {
 });
 
 //get orders for user Id in place order and order
-
 router.get('/getOrders', async (req, res) => {
+
 	const userId = req.query.userId;
-
-	// Define the association between place_order and order
-	place_order.hasMany(order, {foreignKey: 'orderId'});
-	order.belongsTo(place_order, {foreignKey: 'orderId'});
-
-	try {
-		const placeOrders = await place_order.findAll({
+	place_order.hasMany(order, {
+		foreignKey: 'orderId',
+	});
+	order.belongsTo(place_order, {
+		foreignKey: 'orderId',
+	});
+	
+	const result = await place_order.findAll({
+		attributes: ['quantity', 'price', 'resturantManagerId'],
+		include: {
+			model: order,
+			attributes: ['date', 'time'],
+			required: true,
 			where: {
-				userId: userId,
+			     orderId: Sequelize.col('place_order.orderId'),
 			},
-			include: [
-				{
-					model: order,
-					as: 'orders',
-					foreignKey: 'orderId',
-				},
-			],
-		});
+		},
 
-		res.json(placeOrders);
-		console.log(placeOrders);
-	} catch (err) {
-		console.log(err);
-		res.status(500).json({error: 'Internal Server Error'});
-	}
-});
+	});
+	res.json(result);
+}
+);
+
 router.post('/fetchcommunities', async (req, res) => {
 	community.findAll().then((response) => {
 		console.log(response);

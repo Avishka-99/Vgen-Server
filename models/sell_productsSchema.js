@@ -2,6 +2,8 @@ const {DataTypes} = require('sequelize');
 const sequelize = require('./db');
 const multer = require('multer');
 const path = require('path');
+const restaurant = require('./restaurant_managerSchema');
+const Product = require('./productSchema');
 
 // Define the User model
 
@@ -50,5 +52,7 @@ const sellProduct = sequelize.define(
 		timestamps: false,
 	}
 );
+
+
 
 module.exports = sellProduct;
