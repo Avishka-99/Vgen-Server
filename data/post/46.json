@@ -1,0 +1,35 @@
+{
+  "likes": [
+    "20"
+  ],
+  "comments": [
+    {
+      "userId": "20",
+      "comment": "Hello"
+    },
+    {
+      "userId": "20",
+      "comment": "Hellp"
+    },
+    {
+      "userId": "20",
+      "comment": "hi"
+    },
+    {
+      "userId": "20",
+      "comment": "sajaja"
+    },
+    {
+      "userId": "20",
+      "comment": "ajsans"
+    },
+    {
+      "userId": "20",
+      "comment": "aks"
+    },
+    {
+      "userId": "20",
+      "comment": "asnask"
+    }
+  ]
+}
