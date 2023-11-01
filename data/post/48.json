@@ -1,0 +1,21 @@
+{
+  "likes": [],
+  "comments": [
+    {
+      "userId": "20",
+      "comment": "Hello"
+    },
+    {
+      "userId": "20",
+      "comment": "How are you"
+    },
+    {
+      "userId": "78",
+      "comment": "Hi"
+    },
+    {
+      "userId": "78",
+      "comment": "Wee are"
+    }
+  ]
+}
