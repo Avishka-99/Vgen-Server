@@ -76,4 +76,27 @@ router.get('/deliveryOrders', async (req, res) => {
 	
 });
 
+router.get('/deliveryHistory',async(req,res)=>{
+  const userId=req.query.userid
+  console.log("iddddddd",userId)
+
+		await sequelize.query(`SELECT orders.totalQuantity as quantitiy,orders.amount AS price,orders.orderState as state,products.productName AS foodNAme,products.productImage AS image ,
+		orders.orderId AS order_id,
+		(SELECT orders.foodType FROM orders WHERE orders.orderId=order_id) AS foodType
+		FROM place_orders 
+		INNER JOIN orders
+		ON orders.orderId=place_orders.orderId
+		INNER JOIN  products
+		ON products.productId=place_orders.productId WHERE place_orders.userId=${userId} GROUP BY place_orders.orderId;`
+		).then((response)=>{
+			console.log(response[0])
+			res.send(response[0])  
+		})
+	}
+		
+);
+
+	
+
+
 module.exports = router;
