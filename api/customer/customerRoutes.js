@@ -26,6 +26,7 @@ const {or} = require('sequelize');
 const categories = require('../../models/categorySchema');
 const communityUser = require('../../models/community_responseSchema');
 const communityEventPhotos = require('../../models/community_event_photosSchema');
+const deliveryPerson = require('../../models/delivery_personSchema');
 app.use(express.json());
 router.post('/fetchrestaurants', (req, res) => {
 	//console.log(req.body);
@@ -382,10 +383,10 @@ router.get('/checkCommunity', async (req, res) => {
 	try {
 		const userId = req.query.userId;
 
-		communityUser
+		communityEventOrganizer
 			.findAll({
 				where: {
-					userId: userId,
+					eventOrganizerId: userId,
 				},
 			})
 			.then(async (result) => {
@@ -670,13 +671,14 @@ router.post('/likedPost', async (req, res) => {
 	const like = req.body.like;
 	const path = './data/post/' + postId + '.json';
     
-	const filedata=fs.readFileSync(path);
-	const data=JSON.parse(filedata);
-	const config = {likes: data.likes};
+	const fileData = fs.readFileSync(path);
+	console.log(JSON.parse(fileData));
+	const config = {likes: JSON.parse(fileData).likes, comments: JSON.parse(fileData).comments};
 	if(like==true){
 		//check if user already liked
 		const index=config.likes.indexOf(userId);
 		if(index==-1){
+
 			config.likes.push(userId);
 		}
 		else{
@@ -702,21 +704,81 @@ router.post('/commentPost', async (req, res) => {
 	const userId = req.body.userId;
 	const comment = req.body.comment;
 	const path = './data/post/' + postId + '.json';
-    const fildat=fs.readFileSync(path);
-	const data=JSON.parse(fildat);
-	const config = {comments: data.comments};
-	config.comments.push({comments:comment});
+	const fileData = fs.readFileSync(path);
+	console.log(JSON.parse(fileData));
+
+	const config = {likes: JSON.parse(fileData).likes, comments: JSON.parse(fileData).comments};
+	const commentData = {userId: userId, comment: comment};
+	config.comments.push(commentData);
 	try {
 		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
 		console.log('Data successfully saved to disk');
-	} catch (error) {
+	}catch (error) {
 		console.log('An error has occurred ', error);
 	}
 	res.send('success');
 });
+router.get('/getComment/:postId', (req, res) => {
+	const postId = req.params.postId;
+	const path = `./data/post/${postId}.json`;
+  
+	try {
+	  const fileData = fs.readFileSync(path, 'utf8');
+	  const postData = JSON.parse(fileData);
+	  const comments = postData.comments;
+	  res.json({ comments: comments });
+	  console.log(comments);
+	} catch (error) {
+	  res.status(500).json({ error: 'Error occurred while fetching comments.' });
+	}
+  });
+  router.get('/getLike/:postId', (req, res) => {
+	const postId = req.params.postId;
+	const path = `./data/post/${postId}.json`;
+  
+	try {
+	  const fileData = fs.readFileSync(path, 'utf8');
+	  const postData = JSON.parse(fileData);
+	  const likes = postData.likes;
+	  res.json({ likes: likes });
+	  console.log(likes);
+	} catch (error) {
+	  res.status(500).json({ error: 'Error occurred while fetching likes.' });
+	}
+  });
 
 
-
+//get deliveryPerson Location
+router.get('/getDeliveryPersonLocation', async (req, res) => {
+  const deliveryPersonId = req.query.deliveryPersonId;
+	try {
+		
+	   const resData = await deliveryPerson.findAll({
+			where: {
+				deliveryPersonId: deliveryPersonId,
+			},
+		});
+		res.json(resData);
+	} catch (err) {
+		console.log(err);
+	}
+}
+);
+router.get('/getUserLocation', async (req, res) => {
+	const userId = req.query.userId;
+	try {
+		
+	   const resData = await veganUser.findAll({
+			where: {
+				userId: userId,
+			},
+		});
+		res.json(resData);
+	} catch (err) {
+		console.log(err);
+	}
+}
+);
 	
 
 
@@ -745,7 +807,7 @@ router.get('/getProfile/:id', async (req, res) => {
 		console.log(err);
 	}
 });
-router.post('/fetchcategories', async (req, res) => {
+router.get('/fetchcategories', async (req, res) => {
 	try {
 		const result = await categories.findAll();
 		res.send(result);
@@ -854,28 +916,26 @@ router.post('/addfavstore', async (req, res) => {
 
 //get orders for user Id in place order and order
 router.get('/getOrders', async (req, res) => {
-
-	const userId = req.query.userId;
-	place_order.hasMany(order, {
-		foreignKey: 'orderId',
-	});
-	order.belongsTo(place_order, {
-		foreignKey: 'orderId',
-	});
-	
-	const result = await place_order.findAll({
-		attributes: ['quantity', 'price', 'resturantManagerId'],
-		include: {
-			model: order,
-			attributes: ['date', 'time'],
-			required: true,
+     const userId = req.query.userId;
+     try{
+		const orders = await place_order.findAll({
 			where: {
-			     orderId: Sequelize.col('place_order.orderId'),
+				userId: userId,
 			},
-		},
+		});
+		const orderIds = orders.map((order) => order.orderId);
+		const orderData = await order.findAll({
+			where: {
+				orderId: orderIds,
+			},
+		});
+		res.json(orderData);
 
-	});
-	res.json(result);
+	 }
+	 catch (err) {
+		console.log(err);
+		res.status(500).json({error: 'Internal Server Error'});
+	 }
 }
 );
 
@@ -884,5 +944,18 @@ router.post('/fetchcommunities', async (req, res) => {
 		console.log(response);
 		res.send(response);
 	});
+});
+router.post('/updateOrderState', async (req, res) => {
+	const orderId = req.body.orderId;
+	const orderState = req.body.orderState;
+	order.update(
+		{orderState: orderState},
+		{
+			where: {
+				orderId: orderId,
+			},
+		}
+	);
+	res.send('success');
 });
 module.exports = router;
