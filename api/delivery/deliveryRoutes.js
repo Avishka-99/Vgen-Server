@@ -41,6 +41,7 @@ router.get('/deliveryOrders', async (req, res) => {
 		restaurant_managers.resturantName AS rest_name ,
 		restaurant_managers.openTime AS rest_openTime,
 		restaurant_managers.closeTime AS rest_closeTime,
+		restaurant_managers.image AS res_image,
 		(SELECT users.contactNo  FROM users WHERE users.userId=rest_id) AS rest_contacNo,
 		(SELECT users.street  FROM users WHERE users.userId=rest_id)AS rest_address,	
 		(SELECT users.contactNo  FROM users WHERE users.userId=place_orders.userId) AS vgen_contacNo,
@@ -62,7 +63,7 @@ router.get('/deliveryOrders', async (req, res) => {
 					vegan_users
 					ON 
 					vegan_users.userId=place_orders.userId
-				    WHERE  orders.deliveryState=0 AND orders.foodType="Hot" AND orders.deliveryPersonId=${userid}
+				    WHERE  orders.deliveryState=0 AND orders.foodType="Hot" AND orders.deliveryPersonId=${userid} AND orders.rejectDilever=0
 				    GROUP BY orders.orderId;
 		        `).then((response)=>{
 					console.log(response[0])
@@ -87,7 +88,7 @@ router.get('/deliveryHistory',async(req,res)=>{
 		INNER JOIN orders
 		ON orders.orderId=place_orders.orderId
 		INNER JOIN  products
-		ON products.productId=place_orders.productId WHERE place_orders.userId=${userId} GROUP BY place_orders.orderId;`
+		ON products.productId=place_orders.productId WHERE place_orders.userId=29 GROUP BY place_orders.orderId;`
 		).then((response)=>{
 			console.log(response[0])
 			res.send(response[0])  
@@ -95,6 +96,20 @@ router.get('/deliveryHistory',async(req,res)=>{
 	}
 		
 );
+
+router.get('/deliveryRject',async(req,res)=>{
+     
+	const userId=req.query.userid
+	const orderid=req.query.orderID
+
+		await sequelize.query(`
+		UPDATE orders SET orders.rejectDilever=1 
+		WHERE orders.orderId=${orderid} 
+		AND orders.deliveryPersonId=${userId}; `
+		)
+
+
+});
 
 	
 
