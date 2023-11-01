@@ -7,6 +7,8 @@ const jwt = require('jsonwebtoken');
 const fs = require('fs').promises;
 const community = require('../../models/communitySchema');
 const communityResponse = require('../../models/community_responseSchema');
+const communityEventPhotos = require('../../models/community_event_photosSchema');
+const feed = require('../../models/feedsSchema');
 router.post('/registercommunity', async (req, res) => {
 	const image_name = req.body.name;
 	const community_name = req.body.communityName;
@@ -54,5 +56,38 @@ router.post('/registercommunity', async (req, res) => {
 			});
 	});
 	//console.log(req.body.data);
+});
+router.post('/createpostmobile', async (req, res) => {
+	const communityId = req.body.community_id;
+	const images = req.body.images;
+	const description = req.body.description;
+	const title = req.body.title;
+	const feedData = await feed.create({
+		userId: req.body.user_id,
+		communityId: communityId,
+		title: title,
+		description: description,
+	});
+	console.log(feedData.postId);
+	images.forEach(async (element) => {
+		const img_name = Math.random() + element.fileName;
+		await communityEventPhotos.create({
+			eventId: feedData.postId,
+			images: img_name,
+		});
+		fs.writeFile('./uploads/feed/' + img_name, element.base64, 'base64', (err) => {
+			if (err) throw err;
+		}).then(async (response) => {
+			// await communityEventPhotos.bulkCreate(
+			// 	images.map((image) => ({
+			// 		eventId: feedData.postId,
+			// 		images: image.image,
+			// 	}))
+			// );
+		});
+	});
+	//console.log(images);
+
+	res.send('success');
 });
 module.exports = router;

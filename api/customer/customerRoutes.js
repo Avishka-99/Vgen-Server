@@ -26,6 +26,7 @@ const {or} = require('sequelize');
 const categories = require('../../models/categorySchema');
 const communityUser = require('../../models/community_responseSchema');
 const communityEventPhotos = require('../../models/community_event_photosSchema');
+const raw_place_orders = require('../../models/raw_place_orderSchema');
 app.use(express.json());
 router.post('/fetchrestaurants', (req, res) => {
 	//console.log(req.body);
@@ -152,15 +153,45 @@ router.post('/updatedb', async (req, res) => {
 					// other fields...
 				})
 				.then((result_2) => {
-					place_order.create({
-						userId: userId,
-						productId: productId, // Use the 'productId' from the 'product' table
-						quantity: quantity,
-						orderId: result_2.orderId,
-						price: amount,
-						resturantManagerId: id, // Use the 'orderId' from the 'order' table
-					});
-					res.send('success');
+					restaurant
+						.findAll({
+							where: {
+								resturantManagerId: id,
+							},
+						})
+						.then((result_3) => {
+							console.log(result_3)
+							if (result_3.length>0) {
+								place_order.create({
+									userId: userId,
+									productId: productId, // Use the 'productId' from the 'product' table
+									quantity: quantity,
+									orderId: result_2.orderId,
+									price: amount,
+									resturantManagerId: id, // Use the 'orderId' from the 'order' table
+								});
+							} else {
+								raw_place_orders.create({
+									orderId: result_2.orderId,
+									productId: productId,
+									productManufactureId: id,
+									userId: userId,
+									price: amount,
+									quantity: quantity,
+								});
+							}
+							// res.send('success');
+						});
+
+					// place_order.create({
+					// 	userId: userId,
+					// 	productId: productId, // Use the 'productId' from the 'product' table
+					// 	quantity: quantity,
+					// 	orderId: result_2.orderId,
+					// 	price: amount,
+					// 	resturantManagerId: id, // Use the 'orderId' from the 'order' table
+					// });
+					// res.send('success');
 				});
 
 			// console.log(result.id);
@@ -464,7 +495,6 @@ router.get('/productGet', async (req, res) => {
 				as: 'sell_products',
 				foreignKey: 'productId',
 			},
-			
 		});
 		res.json(products);
 	} catch (err) {
@@ -660,48 +690,26 @@ router.get('/getFeed', async (req, res) => {
 });
 //liked post
 router.post('/likedPost', async (req, res) => {
-
 	const postId = req.body.postId;
 	const userId = req.body.userId;
 	const like = req.body.like;
 	const path = './data/post/' + postId + '.json';
-    
-	const filedata=fs.readFileSync(path);
-	const data=JSON.parse(filedata);
+
+	const filedata = fs.readFileSync(path);
+	const data = JSON.parse(filedata);
 	const config = {likes: data.likes};
-	if(like==true){
+	if (like == true) {
 		//check if user already liked
-		const index=config.likes.indexOf(userId);
-		if(index==-1){
+		const index = config.likes.indexOf(userId);
+		if (index == -1) {
 			config.likes.push(userId);
+		} else {
+			config.likes.splice(index, 1);
 		}
-		else{
-			config.likes.splice(index,1);
-		}
-		
+	} else {
+		const index = config.likes.indexOf(userId);
+		config.likes.splice(index, 1);
 	}
-	else{
-		const index=config.likes.indexOf(userId);
-		config.likes.splice(index,1);
-	}
-	try {
-		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
-		console.log('Data successfully saved to disk');
-	} catch (error) {
-		console.log('An error has occurred ', error);
-	}
-	res.send('success'); 
-});
-//comment post
-router.post('/commentPost', async (req, res) => {
-	const postId = req.body.postId;
-	const userId = req.body.userId;
-	const comment = req.body.comment;
-	const path = './data/post/' + postId + '.json';
-    const fildat=fs.readFileSync(path);
-	const data=JSON.parse(fildat);
-	const config = {comments: data.comments};
-	config.comments.push({comments:comment});
 	try {
 		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
 		console.log('Data successfully saved to disk');
@@ -710,7 +718,24 @@ router.post('/commentPost', async (req, res) => {
 	}
 	res.send('success');
 });
-
+//comment post
+router.post('/commentPost', async (req, res) => {
+	const postId = req.body.postId;
+	const userId = req.body.userId;
+	const comment = req.body.comment;
+	const path = './data/post/' + postId + '.json';
+	const fildat = fs.readFileSync(path);
+	const data = JSON.parse(fildat);
+	const config = {comments: data.comments};
+	config.comments.push({comments: comment});
+	try {
+		fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
+		console.log('Data successfully saved to disk');
+	} catch (error) {
+		console.log('An error has occurred ', error);
+	}
+	res.send('success');
+});
 
 //get user by userId
 router.get('/getUser/:id', async (req, res) => {
@@ -766,9 +791,9 @@ router.post('/getallproducts', async (req, res) => {
 	// 		console.log(result);
 	// 		res.send(result);
 	// 	});
-	product.hasMany(sellProducts, { foreignKey: 'productId' });
-sellProducts.hasMany(restaurant, { foreignKey: 'resturantManagerId' });
-restaurant.belongsTo(sellProducts, { foreignKey: 'resturantManagerId' });
+	product.hasMany(sellProducts, {foreignKey: 'productId'});
+	sellProducts.hasMany(restaurant, {foreignKey: 'resturantManagerId'});
+	restaurant.belongsTo(sellProducts, {foreignKey: 'resturantManagerId'});
 	product
 		.findAll({
 			attributes: ['productId', 'description', 'productName', 'productImage', 'product_category', 'vegan_category', 'cooking_time', 'ingredient'],
@@ -777,8 +802,6 @@ restaurant.belongsTo(sellProducts, { foreignKey: 'resturantManagerId' });
 				attributes: ['manufactureId', 'price', 'quantity', 'options'],
 				required: true,
 			},
-				
-			
 		})
 		.then((result) => {
 			console.log(result);
@@ -846,7 +869,6 @@ router.post('/addfavstore', async (req, res) => {
 
 //get orders for user Id in place order and order
 router.get('/getOrders', async (req, res) => {
-
 	const userId = req.query.userId;
 	place_order.hasMany(order, {
 		foreignKey: 'orderId',
@@ -854,7 +876,7 @@ router.get('/getOrders', async (req, res) => {
 	order.belongsTo(place_order, {
 		foreignKey: 'orderId',
 	});
-	
+
 	const result = await place_order.findAll({
 		attributes: ['quantity', 'price', 'resturantManagerId'],
 		include: {
@@ -862,14 +884,12 @@ router.get('/getOrders', async (req, res) => {
 			attributes: ['date', 'time'],
 			required: true,
 			where: {
-			     orderId: Sequelize.col('place_order.orderId'),
+				orderId: Sequelize.col('place_order.orderId'),
 			},
 		},
-
 	});
 	res.json(result);
-}
-);
+});
 
 router.post('/fetchcommunities', async (req, res) => {
 	community.findAll().then((response) => {
@@ -910,7 +930,8 @@ router.post('/getcommunitydetails', async (req, res) => {
 		})
 		.then((result) => {
 			console.log(result);
-			res.send({count:result});
+			res.send({count: result});
 		});
 });
+
 module.exports = router;

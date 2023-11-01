@@ -76,9 +76,10 @@ router.post('/signinuser', (req, res) => {
 								const stores = data.stores;
 								const foods = data.foods;
 								const communities = data.communities;
+								const cart = data.cart;
 								const secretKey = 'Avishka';
 								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
-								response = {type, token, userID, lang, long, stores, foods, communities};
+								response = {type, token, userID, lang, long, stores, foods, communities,cart};
 							} else {
 								const secretKey = 'Avishka';
 								const token = jwt.sign(payload, secretKey, {expiresIn: '10h'});
@@ -131,7 +132,7 @@ router.post('/registeruser', (req, res) => {
 						const id = response.dataValues.userId;
 						if (userRole == 'Customer') {
 							const path = './data/users/' + id + '.json';
-							const config = {stores: [], foods: [], communities: []};
+							const config = {stores: [], foods: [], communities: [],posts:[],cart:[]};
 							try {
 								fs.writeFileSync(path, JSON.stringify(config, null, 2), 'utf8');
 								console.log('Data successfully saved to disk');
