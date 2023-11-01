@@ -795,14 +795,23 @@ router.get('/getUser/:id', async (req, res) => {
 		console.log(err);
 	}
 });
-router.get('/getProfile/:id', async (req, res) => {
+router.get('/getProfile', async (req, res) => {
+	const userId=req.query.userId;
 	try {
 		const userData = await User.findAll({
 			where: {
-				userId: req.params.id,
+				userId: userId,
 			},
 		});
 		res.json(userData);
+	} catch (err) {
+		console.log(err);
+	}
+});
+router.get('/getRecipe', async (req, res) => {
+	try {
+		const recipeData = await Recipe.findAll();
+		res.json(recipeData);
 	} catch (err) {
 		console.log(err);
 	}
