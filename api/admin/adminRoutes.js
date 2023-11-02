@@ -12,6 +12,9 @@ const category = require('../../models/categorySchema');
 const multer = require('multer');
 const product = require('../../models/productSchema');
 
+const Categories = require('../../models/categorySchema');
+const sequelize = require('../../models/db');
+
 router.get('/fetchstaff', async (req, res) => {
 	User.findAll({
 		where: {
@@ -23,6 +26,22 @@ router.get('/fetchstaff', async (req, res) => {
 		res.send(result);
 	});
 });
+
+router.post('/fetchallcategories',async(req,res)=>{
+	const user = req.body.userid;
+	console.log(user)
+	Categories.findAll().then((result)=>{
+		res.send(result)
+	})
+	// sequelize.query("SELECT * FROM categories").then((result)=>{
+	// 	console.log(result)
+	// 	res.send(result)
+	// })
+	//res.send('hello')
+})
+router.post('/fetchallfoods',async(req,res)=>{
+	res.send('hello')
+})
 router.get('/getOrder_recent', async (req, res) => {
 	try {
 	  const orders = await order.findAll({
