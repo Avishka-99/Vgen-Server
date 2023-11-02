@@ -51,4 +51,5 @@ const community = sequelize.define(
 	}
 );
 
+
 module.exports = community;
