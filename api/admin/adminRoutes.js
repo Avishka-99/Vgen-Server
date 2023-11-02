@@ -176,21 +176,26 @@ router.post('/add_category',upload1.single('image'), async (req, res) => {
 	  res.status(500).send('Internal Server Error');
 	}
 });
+const { Op } = require('sequelize'); // Import Sequelize's operators
+
 router.get('/get_foods', async (req, res) => {
 	const name = req.query.name;
 	try {
-	  const foods = await product.findAll({
-          where: {
-			  vegan_category: name,
-		  },
+	  const products = await product.findAll({
+		where: {
+		  row_category: name,
+	  },
 	  });
-	  res.send(foods);
-	  console.log(foods);
+	  res.send(products);
+	  console.log(products);
 	} catch (error) {
 	  console.error(error);
 	  res.status(500).send('Internal Server Error');
 	}
-})
+  }
+  );	
+
+
 
  
   
