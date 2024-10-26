@@ -2,6 +2,8 @@ const {DataTypes} = require('sequelize');
 const sequelize = require('./db');
 const multer = require('multer');
 const path = require('path');
+const restaurant = require('./restaurant_managerSchema');
+const Product = require('./productSchema');
 
 // Define the User model
 
@@ -33,6 +35,7 @@ const sellProduct = sequelize.define(
 			allowNull: true,
 		},
 		
+
 		priceBase: {
 			type: DataTypes.STRING,
 			allowNull: true,
@@ -48,11 +51,13 @@ const sellProduct = sequelize.define(
 		smallDecreament: {
 			type: DataTypes.FLOAT,
 			allowNull: true,
-		},
+		}
 	},
 	{
 		timestamps: false,
 	}
 );
+
+
 
 module.exports = sellProduct;

@@ -25,6 +25,10 @@ const orders = sequelize.define('order', {
  },paymentType:{
        type: DataTypes.STRING,
        allowNull: true
+},
+foodType:{
+       type: DataTypes.STRING,
+       allowNull: true
 },description:{
         type: DataTypes.STRING,
         allowNull: true

@@ -40,11 +40,16 @@ const community = sequelize.define(
 			type: DataTypes.STRING,
 			allowNull: true,
 		},
+		visibility:{
+			type:DataTypes.INTEGER,
+			allowNull:true,
+		}
 	},
 
 	{
 		timestamps: false,
 	}
 );
+
 
 module.exports = community;

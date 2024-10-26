@@ -148,7 +148,7 @@ router.get('/orderTypes', async (req, res) => {
 				GROUP BY p.orderId
 			) t
 			GROUP BY t.orderType
-    `,
+            `,
 			{
 				type: sequelize.QueryTypes.SELECT,
 				replacements: {
