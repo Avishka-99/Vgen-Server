@@ -4,10 +4,10 @@ const router = express.Router();
 const app = express();
 const multer = require('multer');
 const product = require('../../models/productSchema');
-const sell_product=require('../../models/sell_productsSchema')
+const sell_product = require('../../models/sell_productsSchema')
 const orders = require('../../models/ordersSchema');
 const raw_placeOrders = require('../../models/raw_place_orderSchema');
-const refunds=require('../../models/refundsSchema.')
+const refunds = require('../../models/refundsSchema.')
 const sequelize = require('../../models/db');
 const { time } = require('console');
 router.use(express.json());
@@ -20,40 +20,40 @@ const storage = multer.diskStorage({
 		cb(null, Date.now() + path.extname(file.originalname));
 	},
 });
-const upload = multer({storage: storage});
+const upload = multer({ storage: storage });
 router.post('/rowProductStore', upload.single('productImage'), async (req, res) => {
 	const transaction = await sequelize.transaction();
-    const product_category="raw_food";
+	const product_category = "raw_food";
 	try {
-		const {quantity, description, productName, price,category,user_id,priceBase} = req.body;
-		const {filename} = req.file;
-       
+		const { quantity, description, productName, price, category, user_id, priceBase } = req.body;
+		const { filename } = req.file;
+
 		const createdProduct = await product.create({
 			description,
 			productName,
 			productImage: filename,
-            product_category,
-            row_category:category,
-			deleteState:1,
-		},{transaction});
+			product_category,
+			row_category: category,
+			deleteState: 1,
+		}, { transaction });
 
-        const lastInsertedProductId = createdProduct.productId;
-      
-        await sell_product.create({
+		const lastInsertedProductId = createdProduct.productId;
+
+		await sell_product.create({
 			productId: lastInsertedProductId,
-			manufactureId:user_id,
+			manufactureId: user_id,
 			price,
-            quantity,
+			quantity,
 			priceBase,
-		    potionType:0
-        },{transaction});
+			potionType: 0
+		}, { transaction });
 
-        await transaction.commit();
-        res.send({type:"success", message:"Product added Successfully"});
+		await transaction.commit();
+		res.send({ type: "success", message: "Product added Successfully" });
 	} catch (err) {
-        await transaction.rollback();
+		await transaction.rollback();
 		console.log(err);
-		res.send({type:"error",message:"error Occurred"});
+		res.send({ type: "error", message: "error Occurred" });
 	}
 });
 //
@@ -79,7 +79,7 @@ router.get('/allRowProduct', async (req, res) => {
 			},
 			where: {
 				manufactureId: user_id,
-				'$products.deleteState$':1
+				'$products.deleteState$': 1
 			},
 		});
 		res.json(productData);
@@ -117,7 +117,7 @@ router.get('/getAllOrderIDRelevantManufacture', async (req, res) => {
 			group: ['raw_place_order.orderId'],
 		});
 
-	    res.json(result);
+		res.json(result);
 		console.log(result);
 	} catch (err) {
 		console.log(err);
@@ -126,11 +126,11 @@ router.get('/getAllOrderIDRelevantManufacture', async (req, res) => {
 //
 
 //get manufacture order details
-router.get('/manufactureOrderDetails', async(req,res)=>{
+router.get('/manufactureOrderDetails', async (req, res) => {
 	const user_id = req.query.user_id;
 	try {
-		const result= await sequelize.query(
-		`SELECT o.orderId, o.date, o.time, o.amount, o.orderState, o.orderType,
+		const result = await sequelize.query(
+			`SELECT o.orderId, o.date, o.time, o.amount, o.orderState, o.orderType,
 		CONCAT(u.firstName, ' ',u.lastName) AS customerName,
 		CONCAT(u.homeNo,'',u.street,'',u.city) AS address,
 		pay.status AS paymentStatus
@@ -160,11 +160,11 @@ router.get('/manufactureOrderDetails', async(req,res)=>{
 //
 
 //get Manufacture dashboard counts
-router.get('/manufactureOrderCountsDetails', async(req,res)=>{
+router.get('/manufactureOrderCountsDetails', async (req, res) => {
 	const user_id = req.query.user_id;
 	try {
-		const result= await sequelize.query(
-		`
+		const result = await sequelize.query(
+			`
 		SELECT COUNT(t.orderId) AS totalCount, SUM(t.amount) AS totalAmount
 		FROM (
 			SELECT o.orderId, o.amount, o.date
@@ -442,7 +442,7 @@ router.get('/getManufactureOrderMoreDetails', async (req, res) => {
 //get order sorted details
 router.get('/getManufactureOrderDetailsInSortedByType', async (req, res) => {
 	const user_id = req.query.user_id;
-    const order_type = req.query.order_type;
+	const order_type = req.query.order_type;
 	try {
 		const result = await sequelize.query(
 			`
@@ -467,7 +467,7 @@ router.get('/getManufactureOrderDetailsInSortedByType', async (req, res) => {
 				type: sequelize.QueryTypes.SELECT,
 				replacements: {
 					productManufactureId: user_id,
-					order_type:order_type
+					order_type: order_type
 				},
 			}
 		);
@@ -520,7 +520,7 @@ router.get('/getManufactureAcceptedOrderDetailsInTableToday', async (req, res) =
 //get order sorted with accepted details
 router.get('/getManufactureOrderDetailsInSortedByTypeWithAccepted', async (req, res) => {
 	const user_id = req.query.user_id;
-    const order_type = req.query.order_type;
+	const order_type = req.query.order_type;
 	try {
 		const result = await sequelize.query(
 			`
@@ -545,7 +545,7 @@ router.get('/getManufactureOrderDetailsInSortedByTypeWithAccepted', async (req, 
 				type: sequelize.QueryTypes.SELECT,
 				replacements: {
 					productManufactureId: user_id,
-					order_type:order_type
+					order_type: order_type
 				},
 			}
 		);
@@ -559,7 +559,7 @@ router.get('/getManufactureOrderDetailsInSortedByTypeWithAccepted', async (req, 
 
 //update the order state
 router.post('/updateOrderState', async (req, res) => {
-    try {
+	try {
 		const order_id = req.body.order_id;
 		const order_state = req.body.order_state;
 		await orders
@@ -576,11 +576,11 @@ router.post('/updateOrderState', async (req, res) => {
 			)
 			.then((result) => {
 				console.log('Update result:', result);
-				res.send({type:"success", message:"Order Finalized Successfully"});
+				res.send({ type: "success", message: "Order Finalized Successfully" });
 			});
 	} catch (err) {
 		console.log('Error:', err);
-		res.send({type:"error",message:"error Occurred"});
+		res.send({ type: "error", message: "error Occurred" });
 	}
 });
 
@@ -591,17 +591,17 @@ router.post('/updateOrderRejectState', async (req, res) => {
 	const transaction = await sequelize.transaction();
 	const order_id = req.body.order_id;
 	const order_state = req.body.order_state;
-    const currentDate = new Date();
+	const currentDate = new Date();
 	const formattedDate = currentDate.toISOString().slice(0, 10);
-    const formattedTime = currentDate.toLocaleTimeString('en-US', {
-        hour12: false,
-        hour: '2-digit',
-        minute: '2-digit',
-        second: '2-digit',
-    });
-    try {
-		
-        await orders.update(
+	const formattedTime = currentDate.toLocaleTimeString('en-US', {
+		hour12: false,
+		hour: '2-digit',
+		minute: '2-digit',
+		second: '2-digit',
+	});
+	try {
+
+		await orders.update(
 			{
 				orderState: order_state,
 			},
@@ -610,26 +610,26 @@ router.post('/updateOrderRejectState', async (req, res) => {
 					orderId: order_id,
 				},
 			},
-			{transaction}
+			{ transaction }
 		);
-        
+
 		await refunds.create(
-			{ 
-				date:formattedDate,
-				time:formattedTime,
-				orderId:order_id,
-				status:0,
+			{
+				date: formattedDate,
+				time: formattedTime,
+				orderId: order_id,
+				status: 0,
 			},
-			{transaction}
-        );
+			{ transaction }
+		);
 
 		await transaction.commit();
-		res.send({type:"success", message:"Order reject Successfully"});
-			
+		res.send({ type: "success", message: "Order reject Successfully" });
+
 	} catch (err) {
 		console.log('Error:', err);
 		await transaction.rollback();
-		res.send({type:"error",message:"error Occurred"});
+		res.send({ type: "error", message: "error Occurred" });
 	}
 });
 
@@ -638,13 +638,13 @@ router.post('/updateOrderRejectState', async (req, res) => {
 
 //delete product
 router.post('/deleteProduct', async (req, res) => {
-    try {
+	try {
 		const id = req.body.id;
-		
+
 		await product
 			.update(
 				{
-					deleteState:0
+					deleteState: 0
 				},
 				{
 					where: {
@@ -654,11 +654,329 @@ router.post('/deleteProduct', async (req, res) => {
 			)
 			.then((result) => {
 				console.log('Update result:', result);
-				res.send({type:"success", message:"product delete Successfully"});
+				res.send({ type: "success", message: "product delete Successfully" });
 			});
 	} catch (err) {
 		console.log('Error:', err);
-		res.send({type:"error",message:"error Occurred"});
+		res.send({ type: "error", message: "error Occurred" });
+	}
+});
+
+//
+
+// search chart details
+router.get('/rawSearchForChart', async (req, res) => {
+	const value = req.query.value;
+	const user_id = req.query.user_id;
+	let responseData;
+
+	try {
+		if (value == 1) {
+			responseData = await sequelize.query(
+				`
+				SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+				FROM (
+					SELECT o.orderId, o.amount, o.date,o.orderType
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :restaurantManagerId
+					AND o.date = CURRENT_DATE()
+					AND o.orderState>-1
+					GROUP BY p.orderId
+				) t
+				GROUP BY t.orderType
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						restaurantManagerId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 2) {
+			responseData = await sequelize.query(
+				`
+				SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+				FROM (
+					SELECT o.orderId, o.amount, o.date,o.orderType
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :restaurantManagerId
+					AND o.date >= CURRENT_DATE - INTERVAL 7 DAY 
+					AND o.orderState>-1
+					GROUP BY p.orderId
+				) t
+				GROUP BY t.orderType
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						restaurantManagerId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 3) {
+			responseData = await sequelize.query(
+				`
+				SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+				FROM (
+					SELECT o.orderId, o.amount, o.date,o.orderType
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :restaurantManagerId
+					AND o.date >= CURRENT_DATE - INTERVAL 14 DAY 
+					AND o.orderState>-1
+					GROUP BY p.orderId
+				) t
+				GROUP BY t.orderType
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						restaurantManagerId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 4) {
+			responseData = await sequelize.query(
+				`
+				SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+				FROM (
+					SELECT o.orderId, o.amount, o.date,o.orderType
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :restaurantManagerId
+					AND o.date >= CURRENT_DATE - INTERVAL 30 DAY 
+					AND o.orderState>-1
+					GROUP BY p.orderId
+				) t
+				GROUP BY t.orderType
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						restaurantManagerId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 5) {
+			responseData = await sequelize.query(
+				`
+				SELECT t.orderType,COUNT(t.orderId) AS orderTypeCount
+				FROM (
+					SELECT o.orderId, o.amount, o.date,o.orderType
+					FROM orders o
+					INNER JOIN raw_place_orders p ON p.orderId = o.orderId
+					WHERE p.productManufactureId = :restaurantManagerId
+					AND o.orderState>-1
+					GROUP BY p.orderId
+				) t
+				GROUP BY t.orderType
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						restaurantManagerId: user_id,
+					},
+				}
+			);
+
+		}
+		res.json(responseData);
+
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
+// search value details
+router.get('/rawSearchForValue', async (req, res) => {
+	const value = req.query.value;
+	const user_id = req.query.user_id;
+	let responseData;
+
+	try {
+		if (value == 1) {
+			responseData = await sequelize.query(
+				`
+				SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+				FROM raw_place_orders p 
+				INNER JOIN orders o ON o.orderId=p.orderId
+				INNER JOIN products pr ON pr.productId=p.productId 
+				WHERE
+				p.productManufactureId = :productManufactureId
+				AND o.date=CURRENT_DATE
+				AND o.orderState>-1
+				GROUP BY p.productId 
+				ORDER by count DESC 
+				LIMIT 1
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						productManufactureId: user_id,
+					},
+				}
+			);
+		} else if (value == 2) {
+			responseData = await sequelize.query(
+				`
+				SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+				FROM raw_place_orders p 
+				INNER JOIN orders o ON o.orderId=p.orderId
+				INNER JOIN products pr ON pr.productId=p.productId 
+				WHERE
+				p.productManufactureId = :productManufactureId
+				AND o.date>= CURRENT_DATE - INTERVAL 7 DAY
+				AND o.orderState>-1
+				GROUP BY p.productId 
+				ORDER by count DESC 
+				LIMIT 1
+				
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						productManufactureId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 3) {
+			responseData = await sequelize.query(
+				`
+				SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+				FROM raw_place_orders p 
+				INNER JOIN orders o ON o.orderId=p.orderId
+				INNER JOIN products pr ON pr.productId=p.productId 
+				WHERE
+				p.productManufactureId = :productManufactureId
+				ND o.date>= CURRENT_DATE - INTERVAL 14 DAY
+				AND o.orderState>-1
+				GROUP BY p.productId 
+				ORDER by count DESC 
+				LIMIT 1
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						productManufactureId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 4) {
+			responseData = await sequelize.query(
+				`
+				SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+				FROM raw_place_orders p 
+				INNER JOIN orders o ON o.orderId=p.orderId
+				INNER JOIN products pr ON pr.productId=p.productId 
+				WHERE
+				p.productManufactureId = :productManufactureId		
+				AND o.date>= CURRENT_DATE - INTERVAL 30 DAY
+				AND o.orderState>-1
+				GROUP BY p.productId 
+				ORDER by count DESC 
+				LIMIT 1
+				
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						productManufactureId: user_id,
+					},
+				}
+			);
+
+		} else if (value == 5) {
+			responseData = await sequelize.query(
+				`
+				SELECT pr.*, p.productId,p.productManufactureId,p.orderId,SUM(p.quantity) AS count 
+				FROM raw_place_orders p 
+				INNER JOIN orders o ON o.orderId=p.orderId
+				INNER JOIN products pr ON pr.productId=p.productId 
+				WHERE
+				p.productManufactureId = :productManufactureId
+				AND o.orderState>-1
+				GROUP BY p.productId 
+				ORDER by count DESC 
+				LIMIT 1
+				`,
+				{
+					type: sequelize.QueryTypes.SELECT,
+					replacements: {
+						productManufactureId: user_id,
+					},
+				}
+			);
+
+		}
+		res.json(responseData);
+
+	} catch (err) {
+		console.log(err);
+	}
+});
+
+//
+
+// search details
+router.get('/rawSearchData', async (req, res) => {
+	const orderType = req.query.orderType;
+	const user_id = req.query.user_id;
+	const paymentState = req.query.paymentState;
+	const orderState = req.query.orderState;
+	const orderDate = req.query.orderDate;
+
+	console.log(orderType)
+	console.log(paymentState)
+	console.log(orderState)
+	console.log(orderDate)
+
+	try {
+
+		const result = await sequelize.query(
+			`
+				SELECT o.orderId, o.date, o.time, o.amount, o.orderState, o.orderType,
+				CONCAT(u.firstName, ' ',u.lastName) AS customerName,
+				CONCAT(u.homeNo,'',u.street,'',u.city) AS address,
+				pay.status AS paymentStatus
+				FROM orders o 
+				INNER JOIN raw_place_orders p ON p.orderId=o.orderId 
+				INNER JOIN product_manufactures pm ON pm.productManufactureId=p.productManufactureId 
+				INNER JOIN users u ON u.userId=p.userId 
+				INNER JOIN payments pay ON pay.orderId=o.orderId 
+				WHERE pm.productManufactureId=:restaurantManagerId 
+					AND pay.userId=:restaurantManagerId 
+					AND o.orderState=:orderState
+					AND o.date =:orderDate
+					AND pay.status =:paymentState
+					AND o.orderType =:orderType
+
+				GROUP BY p.orderId
+			`,
+			{
+				type: sequelize.QueryTypes.SELECT,
+				replacements: {
+					restaurantManagerId: user_id,
+					orderState: orderState,
+					orderDate: orderDate,
+					paymentState: paymentState,
+					orderType: orderType
+				},
+			}
+		);
+		res.json(result);
+
+	} catch (err) {
+		console.log(err);
 	}
 });
 
