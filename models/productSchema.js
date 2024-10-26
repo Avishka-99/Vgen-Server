@@ -46,7 +46,7 @@ row_category:{
        allowNull: true
 },deleteState:{
        type: DataTypes.TINYINT,
-       allowNull: false
+       allowNull: true
 },
 },     
 {

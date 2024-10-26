@@ -20,6 +20,10 @@ const sellProduct = sequelize.define(
 			primaryKey: true,
 			foriegnKey: true,
 		},
+		price: {
+			type: DataTypes.INTEGER,
+			allowNull: true,
+		},
 		quantity: {
 			type: DataTypes.FLOAT,
 			allowNull: true,
@@ -35,7 +39,7 @@ const sellProduct = sequelize.define(
 		},
 		potionType: {
 			type: DataTypes.TINYINT,
-			allowNull: false,
+			allowNull: true,
 		},
 		largeIncreament: {
 			type: DataTypes.STRING,
